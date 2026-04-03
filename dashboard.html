@@ -153,6 +153,36 @@
     .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200}
     .ov.show{display:block}
 
+    /* ── Referrals ── */
+    .ref-hero{background:var(--grad);border-radius:var(--r);padding:20px;margin-bottom:12px;color:#fff}
+    .ref-hero-lbl{font-size:11px;font-weight:700;opacity:.65;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+    .ref-link-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.18);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+    .ref-link-txt{flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.92}
+    .ref-copy-btn{padding:6px 14px;background:#fff;color:#e91e8c;font-size:12px;font-weight:700;border-radius:6px;border:none;cursor:pointer;font-family:var(--font);flex-shrink:0;transition:all .2s}
+    .ref-copy-btn:hover{opacity:.85}
+    .ref-hero-sub{font-size:12px;opacity:.7}
+    .ref-prog-row{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+    .ref-ring-wrap{position:relative;width:80px;height:80px;flex-shrink:0}
+    .ref-ring{width:80px;height:80px}
+    .ref-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--text)}
+    .ref-prog-title{font-size:15px;font-weight:800;margin-bottom:3px}
+    .ref-prog-sub{font-size:12px;color:var(--muted)}
+    .ref-boost-badge{display:inline-flex;align-items:center;gap:5px;background:var(--grad);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;margin-top:6px}
+    .ref-bar-wrap{height:5px;background:#f0f0f0;border-radius:100px;overflow:hidden}
+    .ref-bar-fill{height:100%;background:var(--grad);border-radius:100px;transition:width .6s}
+    .ref-rewards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+    .rri{background:#fafafa;border:1px solid var(--border);border-radius:10px;padding:13px 10px;text-align:center}
+    .rri-icon{font-size:22px;margin-bottom:5px}
+    .rri-lbl{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px}
+    .rri-val{font-size:15px;font-weight:800}
+    .rri-val span{font-size:11px;font-weight:500;color:var(--muted)}
+    .ref-urow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .ref-urow:last-child{border-bottom:none}
+    .ref-uav{width:32px;height:32px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+    .ref-uname{font-size:13px;font-weight:600}
+    .ref-udate{font-size:11px;color:var(--muted)}
+    .ref-empty{text-align:center;padding:28px 0;color:var(--muted);font-size:13px}
+
     /* ── Mobile ── */
     @media(max-width:680px){
       .sb{transform:translateX(-100%)}
@@ -190,6 +220,9 @@
     </button>
     <button class="ni" data-p="orders">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>My Orders
+    </button>
+    <button class="ni" data-p="referrals">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>Referrals
     </button>
   </nav>
   <div class="sb-foot">
@@ -343,6 +376,55 @@
       <div id="olist"></div>
     </section>
 
+    <!-- REFERRALS -->
+    <section class="page" id="p-referrals">
+      <div class="pg-head"><h1>Referrals</h1><p>Invite friends · Unlock 2× limits after 10 joins</p></div>
+
+      <div class="ref-hero">
+        <div class="ref-hero-lbl">Your Referral Link</div>
+        <div class="ref-link-row">
+          <span class="ref-link-txt" id="refLinkTxt">Loading…</span>
+          <button class="ref-copy-btn" id="refCopyBtn" onclick="copyRef()">Copy</button>
+        </div>
+        <div class="ref-hero-sub">Share this link — each friend who signs up counts as 1 referral</div>
+      </div>
+
+      <div class="card">
+        <div class="ref-prog-row">
+          <div class="ref-ring-wrap">
+            <svg class="ref-ring" viewBox="0 0 80 80">
+              <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f9a825"/><stop offset="100%" stop-color="#e91e8c"/></linearGradient></defs>
+              <circle cx="40" cy="40" r="34" stroke="#f0f0f0" stroke-width="7" fill="none"/>
+              <circle cx="40" cy="40" r="34" stroke="url(#rg)" stroke-width="7" fill="none"
+                stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round"
+                id="refArc" transform="rotate(-90 40 40)"/>
+            </svg>
+            <div class="ref-ring-val" id="refCount">0</div>
+          </div>
+          <div style="flex:1">
+            <div class="ref-prog-title" id="refProgTitle">0 / 10 Referrals</div>
+            <div class="ref-prog-sub" id="refProgSub">10 more to unlock 2× boost</div>
+            <div class="ref-boost-badge" id="refBoostBadge" style="display:none">🚀 2× Boost Active!</div>
+          </div>
+        </div>
+        <div class="ref-bar-wrap"><div class="ref-bar-fill" id="refBarFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎁 Unlocks at 10 Referrals</div>
+        <div class="ref-rewards">
+          <div class="rri"><div class="rri-icon">👁</div><div class="rri-lbl">Views</div><div class="rri-val">2,000 <span>/day</span></div></div>
+          <div class="rri"><div class="rri-icon">❤️</div><div class="rri-lbl">Likes</div><div class="rri-val">400 <span>/day</span></div></div>
+          <div class="rri"><div class="rri-icon">👥</div><div class="rri-lbl">Followers</div><div class="rri-val">200 <span>/order</span></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👥 Friends Who Joined</div>
+        <div id="refList"><div class="ref-empty">Loading…</div></div>
+      </div>
+    </section>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -379,7 +461,7 @@ const randDel=()=>Math.floor(Math.random()*19)+6;
 function toast(msg,t='ok'){const e=document.getElementById('toast');e.className='toast '+t;e.innerHTML=(t==='ok'?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>')+' '+msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3500)}
 
 // ── Nav ──
-const pages={overview:'Overview',views:'Add Views',likes:'Add Likes',followers:'Add Followers',orders:'My Orders'};
+const pages={overview:'Overview',views:'Add Views',likes:'Add Likes',followers:'Add Followers',orders:'My Orders',referrals:'Referrals'};
 function go(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
@@ -392,6 +474,7 @@ function go(p){
   if(p==='likes')initL();
   if(p==='followers')initF();
   if(p==='orders')renderOrders('all');
+  if(p==='referrals')initRef();
 }
 document.querySelectorAll('.ni[data-p]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.p)));
 go('overview');
@@ -426,40 +509,53 @@ function showDel(boxId,loadId,lblId,timeId,hrs){
   },Math.floor(Math.random()*1000)+1500);
 }
 
+// ── BOOST ──
+let _boost=null;
+async function getBoost(){
+  if(_boost!==null)return _boost;
+  try{const r=await fetch('/api/refs/'+u);const refs=await r.json();_boost=refs.length>=10;}catch{_boost=false;}
+  return _boost;
+}
+function resetBoost(){_boost=null;}
+
 // ── OVERVIEW ──
-function initOV(){
+async function initOV(){
+  const boosted=await getBoost();
+  const maxV=boosted?2000:1000,maxL=boosted?400:200;
   const o=getOrders();let tv=0,tl=0,tf=0,ta=0;
-  o.forEach(x=>{if(x.type==='views')tv+=x.qty;if(x.type==='likes')tl+=x.qty;if(x.type==='followers')tf+=x.qty;if(status(x).label!=='Delivered'&&status(x).label!=='Completed'&&status(x).label!=='Cancelled')ta++});
+  o.forEach(x=>{if(x.type==='views')tv+=x.qty;if(x.type==='likes')tl+=x.qty;if(x.type==='followers')tf+=x.qty;if(status(x).label!=='Delivered'&&status(x).label!=='Completed'&&status(x).label!=='Cancelled')ta++;});
   document.getElementById('ov-v').textContent=tv.toLocaleString();
   document.getElementById('ov-l').textContent=tl.toLocaleString();
   document.getElementById('ov-f').textContent=tf.toLocaleString();
   document.getElementById('ov-a').textContent=ta;
   const dv=getDV(),dl=getDL();
-  document.getElementById('ov-dv-t').textContent=dv.count.toLocaleString()+' / 1,000';
-  document.getElementById('ov-dl-t').textContent=dl.count+' / 200';
-  document.getElementById('ov-dv-b').style.width=Math.min(dv.count/10,100)+'%';
-  document.getElementById('ov-dl-b').style.width=Math.min(dl.count/2,100)+'%';
+  document.getElementById('ov-dv-t').textContent=dv.count.toLocaleString()+' / '+maxV.toLocaleString()+(boosted?' 🚀':'');
+  document.getElementById('ov-dl-t').textContent=dl.count+' / '+maxL+(boosted?' 🚀':'');
+  document.getElementById('ov-dv-b').style.width=Math.min(dv.count/maxV*100,100)+'%';
+  document.getElementById('ov-dl-b').style.width=Math.min(dl.count/maxL*100,100)+'%';
   const rec=[...o].reverse().slice(0,3);
   document.getElementById('ov-rec').innerHTML=rec.length?buildOCards(rec):'<div class="empty"><div class="ei">📦</div><p>No orders yet</p></div>';
 }
 
 // ── VIEWS ──
-let vDel=0,vReady=false;
-function initV(){
+let vDel=0,vReady=false,_vMax=1000;
+async function initV(){
+  const boosted=await getBoost();
+  _vMax=boosted?2000:1000;
   vReady=false; vDel=0;
   document.getElementById('v-del-box').classList.remove('show');
-  const rem=Math.max(0,1000-getDV().count);
+  const rem=Math.max(0,_vMax-getDV().count);
   const sl=document.getElementById('v-sl'),num=document.getElementById('v-num');
-  sl.max=Math.min(1000,Math.max(100,rem));
-  if(+sl.value>rem){sl.value=Math.min(rem,1000);num.value=sl.value}
+  sl.max=Math.min(_vMax,Math.max(100,rem));
+  if(+sl.value>rem){sl.value=Math.min(rem,_vMax);num.value=sl.value}
   updVrem();
   const check=()=>{trigDel('v')};
   sl.oninput=()=>{num.value=sl.value;updVrem();check()};
-  num.oninput=()=>{let v=Math.min(Math.max(+num.value||100,100),Math.min(1000,rem));num.value=sl.value=v;updVrem();check()};
+  num.oninput=()=>{let v=Math.min(Math.max(+num.value||100,100),Math.min(_vMax,rem));num.value=sl.value=v;updVrem();check()};
   document.getElementById('v-link').oninput=check;
 }
 function updVrem(){
-  const rem=Math.max(0,1000-getDV().count);
+  const rem=Math.max(0,_vMax-getDV().count);
   const rt=document.getElementById('v-rem');
   const btn=document.getElementById('v-btn');
   if(rem<=0){rt.className='rtag rt-out';rt.textContent='✗ Daily limit reached';btn.disabled=true}
@@ -467,31 +563,37 @@ function updVrem(){
 }
 
 // ── LIKES ──
-let lDel=0,lReady=false,lType='post';
-function initL(){
+let lDel=0,lReady=false,lType='post',_lMax=200;
+async function initL(){
+  const boosted=await getBoost();
+  _lMax=boosted?400:200;
   lReady=false; lDel=0;
   document.getElementById('l-del-box').classList.remove('show');
-  const rem=Math.max(0,200-getDL().count);
+  const rem=Math.max(0,_lMax-getDL().count);
   const sl=document.getElementById('l-sl'),num=document.getElementById('l-num');
-  sl.max=Math.min(200,Math.max(100,rem));
-  if(+sl.value>rem){sl.value=Math.min(rem,200);num.value=sl.value}
+  sl.max=Math.min(_lMax,Math.max(100,rem));
+  if(+sl.value>rem){sl.value=Math.min(rem,_lMax);num.value=sl.value}
   updLrem();
   const check=()=>trigDel('l');
   sl.oninput=()=>{num.value=sl.value;updLrem();check()};
-  num.oninput=()=>{let v=Math.min(Math.max(+num.value||100,100),Math.min(200,rem));num.value=sl.value=v;updLrem();check()};
+  num.oninput=()=>{let v=Math.min(Math.max(+num.value||100,100),Math.min(_lMax,rem));num.value=sl.value=v;updLrem();check()};
   document.getElementById('l-link').oninput=check;
 }
 function ltype(t){lType=t;document.getElementById('l-post').classList.toggle('on',t==='post');document.getElementById('l-reel').classList.toggle('on',t==='reel');document.getElementById('l-link').placeholder=t==='reel'?'https://www.instagram.com/reel/…':'https://www.instagram.com/p/…';trigDel('l')}
 function updLrem(){
-  const rem=Math.max(0,200-getDL().count);
+  const rem=Math.max(0,_lMax-getDL().count);
   const rt=document.getElementById('l-rem'),btn=document.getElementById('l-btn');
   if(rem<=0){rt.className='rtag rt-out';rt.textContent='✗ Daily limit reached';btn.disabled=true}
   else{rt.className=rem<50?'rtag rt-low':'rtag rt-ok';rt.textContent=(rem<50?'⚠ ':'✓ ')+rem+' remaining today';btn.disabled=false}
 }
 
 // ── FOLLOWERS ──
-let fDel=0, fReady=false;
-function initF(){
+let fDel=0,fReady=false;
+async function initF(){
+  const boosted=await getBoost();
+  const maxQty=boosted?200:100;
+  const unlockDays=boosted?7:5;
+  const coolDays=boosted?7:5;
   fReady=false; fDel=0;
   document.getElementById('f-del-box').classList.remove('show');
   const now=Date.now(),sess=getSess();
@@ -500,15 +602,17 @@ function initF(){
   const lastO=getFL();
   const daysSinceLast=lastO?(now-new Date(lastO).getTime())/86400000:999;
   const locked=document.getElementById('f-locked'),avail=document.getElementById('f-avail');
-  if(daysSince<5){const d=Math.ceil(5-daysSince);document.getElementById('f-lt').textContent='🔒 Not unlocked yet';document.getElementById('f-ls').textContent=`Available in ${d} day${d!==1?'s':''} after joining.`;locked.style.display='block';avail.style.display='none'}
-  else if(daysSinceLast<5){const d=Math.ceil(5-daysSinceLast);document.getElementById('f-lt').textContent='⏳ Cooldown active';document.getElementById('f-ls').textContent=`Next order in ${d} day${d!==1?'s':''}.`;locked.style.display='block';avail.style.display='none'}
+  if(daysSince<unlockDays){const d=Math.ceil(unlockDays-daysSince);document.getElementById('f-lt').textContent='🔒 Not unlocked yet';document.getElementById('f-ls').textContent=`Available in ${d} day${d!==1?'s':''} after joining.`;locked.style.display='block';avail.style.display='none'}
+  else if(daysSinceLast<coolDays){const d=Math.ceil(coolDays-daysSinceLast);document.getElementById('f-lt').textContent='⏳ Cooldown active';document.getElementById('f-ls').textContent=`Next order in ${d} day${d!==1?'s':''}.`;locked.style.display='block';avail.style.display='none'}
   else{
     locked.style.display='none';avail.style.display='block';
-    const nxt=new Date(now+5*86400000).toLocaleDateString('en-IN',{day:'numeric',month:'long'});
+    document.getElementById('f-sl').max=maxQty;
+    document.getElementById('f-num').max=maxQty;
+    const nxt=new Date(now+coolDays*86400000).toLocaleDateString('en-IN',{day:'numeric',month:'long'});
     document.getElementById('f-nxt').textContent=nxt;
     const sl=document.getElementById('f-sl'),num=document.getElementById('f-num');
     sl.oninput=()=>{num.value=sl.value;trigDel('f')};
-    num.oninput=()=>{let v=Math.min(Math.max(+num.value||10,10),100);num.value=sl.value=v;trigDel('f')};
+    num.oninput=()=>{let v=Math.min(Math.max(+num.value||10,10),maxQty);num.value=sl.value=v;trigDel('f')};
     trigDel('f');
   }
 }
@@ -530,7 +634,7 @@ function trigDel(pfx){
 }
 
 // ── PLACE ORDER ──
-function order(type){
+async function order(type){
   const o=getOrders();let item={id:Date.now(),type,createdAt:new Date().toISOString()};
   if(type==='views'){
     const link=document.getElementById('v-link').value.trim();
@@ -538,7 +642,7 @@ function order(type){
     if(!link){toast('Enter a Reel URL','err');return}
     if(!link.includes('instagram.com')){toast('Invalid Instagram URL','err');return}
     if(!vReady){toast('Wait for delivery estimate','err');return}
-    const rem=1000-getDV().count;if(qty>rem){toast('Limit exceeded','err');return}
+    const rem=_vMax-getDV().count;if(qty>rem){toast('Limit exceeded','err');return}
     item={...item,link,qty,dh:vDel,ctype:'Reel'};saveDV(getDV().count+qty);
   }else if(type==='likes'){
     const link=document.getElementById('l-link').value.trim();
@@ -546,7 +650,7 @@ function order(type){
     if(!link){toast('Enter a URL','err');return}
     if(!link.includes('instagram.com')){toast('Invalid Instagram URL','err');return}
     if(!lReady){toast('Wait for delivery estimate','err');return}
-    const rem=200-getDL().count;if(qty>rem){toast('Limit exceeded','err');return}
+    const rem=_lMax-getDL().count;if(qty>rem){toast('Limit exceeded','err');return}
     item={...item,link,qty,dh:lDel,ctype:lType==='reel'?'Reel':'Post'};saveDL(getDL().count+qty);
   }else if(type==='followers'){
     const qty=+document.getElementById('f-sl').value;
@@ -592,6 +696,53 @@ function renderOrders(f){
   document.getElementById('olist').innerHTML=buildOCards(rows);
 }
 function filt(f,btn){document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderOrders(f)}
+
+// ── REFERRALS ──
+async function initRef(){
+  const link=location.origin+'/login?ref='+encodeURIComponent(u);
+  document.getElementById('refLinkTxt').textContent=link;
+  try{
+    const r=await fetch('/api/refs/'+u);
+    const refs=await r.json();
+    const cnt=refs.length,target=10,pct=Math.min(cnt/target,1);
+    document.getElementById('refArc').setAttribute('stroke-dashoffset',(213.6*(1-pct)).toFixed(1));
+    document.getElementById('refCount').textContent=cnt;
+    document.getElementById('refProgTitle').textContent=cnt+' / '+target+' Referrals';
+    if(cnt>=target){
+      document.getElementById('refProgSub').style.display='none';
+      document.getElementById('refBoostBadge').style.display='inline-flex';
+      _boost=true;
+    } else {
+      document.getElementById('refProgSub').textContent=(target-cnt)+' more to unlock 2× boost';
+    }
+    document.getElementById('refBarFill').style.width=(pct*100)+'%';
+    const listEl=document.getElementById('refList');
+    if(!refs.length){
+      listEl.innerHTML='<div class="ref-empty">No referrals yet. Share your link to get started! 🎯</div>';
+    } else {
+      listEl.innerHTML=[...refs].reverse().map(r=>`
+        <div class="ref-urow">
+          <div class="ref-uav">${r.user[0].toUpperCase()}</div>
+          <div style="flex:1">
+            <div class="ref-uname">@${r.user}</div>
+            <div class="ref-udate">${new Date(r.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'})}</div>
+          </div>
+          <span class="badge bd">Joined</span>
+        </div>`).join('');
+    }
+  } catch {
+    document.getElementById('refList').innerHTML='<div class="ref-empty">Could not load referrals.</div>';
+  }
+}
+function copyRef(){
+  const link=location.origin+'/login?ref='+encodeURIComponent(u);
+  navigator.clipboard.writeText(link).then(()=>{
+    const btn=document.getElementById('refCopyBtn');
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Copy',2000);
+    toast('Referral link copied!');
+  }).catch(()=>toast('Copy failed','err'));
+}
 
 function logout(){localStorage.removeItem('mi_user');location.href='/login'}
 </script>

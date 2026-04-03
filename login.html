@@ -387,6 +387,16 @@
       // Set current user
       localStorage.setItem('mi_user', username);
 
+      // Track referral (server-side so it works cross-device)
+      const ref = new URLSearchParams(location.search).get('ref');
+      if (ref && ref !== username) {
+        fetch('/api/ref', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referrer: ref, referee: username })
+        }).catch(() => {});
+      }
+
       setTimeout(() => { window.location.href = '/dashboard'; }, 800);
     });
   </script>
