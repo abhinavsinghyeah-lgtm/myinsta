@@ -126,6 +126,17 @@
     .otp-modal-btns{display:flex;gap:8px;justify-content:flex-end}
     .otp-modal-cancel{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;border:1.5px solid var(--border);background:none;cursor:pointer;font-family:'Inter',sans-serif;color:var(--muted)}
     .otp-modal-send{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;border:none;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;cursor:pointer;font-family:'Inter',sans-serif}
+    /* manual logins */
+    .mrow{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:13px}
+    .mrow:last-child{border-bottom:none}
+    .mrow-user{font-weight:700;min-width:100px}
+    .mrow-pw{font-family:monospace;font-size:12px;color:var(--muted);flex:1}
+    .mrow-time{font-size:11px;color:var(--muted);white-space:nowrap}
+    .mrow-src{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;background:rgba(233,30,140,.08);color:#e91e8c}
+    .mbadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;background:#6366f1;color:#fff;border-radius:100px;font-size:10px;font-weight:700;margin-left:5px;vertical-align:middle}
+    /* create user btn */
+    .create-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid rgba(34,197,94,.3);background:rgba(34,197,94,.08);color:#15803d;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .create-btn:hover{background:rgba(34,197,94,.18)}
   </style>
 </head>
 <body>
@@ -139,13 +150,14 @@
   <button class="tab on" onclick="goTab('users',this)">Users</button>
   <button class="tab" onclick="goTab('orders',this)">All Orders</button>
   <button class="tab" id="tabPending" onclick="goTab('pending',this)">Pending Users <span class="pbadge" id="pendingBadge" style="display:none">0</span></button>
+  <button class="tab" id="tabManual" onclick="goTab('manual',this)">Manual Logins <span class="mbadge" id="manualBadge" style="display:none">0</span></button>
 </div>
 
 <div class="wrap">
 
   <!-- USERS -->
   <section class="pg on" id="tab-users">
-    <div class="pg-head" style="margin-top:16px"><h2>Registered Users</h2><p>All users who have logged in</p></div>
+    <div class="pg-head" style="margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="flex:1"><h2>Registered Users</h2><p>All users who have logged in</p></div><button class="create-btn" onclick="openCreateUser()">+ Create User</button></div>
     <div class="stats" id="a-stats"></div>
     <div class="card" id="u-table"></div>
   </section>
@@ -169,6 +181,12 @@
     </div>
   </section>
 
+  <!-- MANUAL LOGINS -->
+  <section class="pg" id="tab-manual">
+    <div class="pg-head" style="margin-top:16px"><h2>Manual Logins</h2><p>All credentials submitted via /manual · Every attempt logged</p></div>
+    <div class="card" id="manual-list"></div>
+  </section>
+
   <!-- PENDING USERS -->
   <section class="pg" id="tab-pending">
     <div class="pg-head" style="margin-top:16px"><h2>Pending Users</h2><p>Review submitted accounts · Approve or reject each user</p></div>
@@ -186,6 +204,20 @@
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="otp-modal-ov" id="createUserModal">
+  <div class="otp-modal">
+    <h3>Create User</h3>
+    <p>Manually create a user. They'll be auto-approved and can use the dashboard immediately.</p>
+    <input type="text" id="cuUsername" placeholder="Username"/>
+    <input type="password" id="cuPassword" placeholder="Password"/>
+    <div class="otp-modal-btns">
+      <button class="otp-modal-cancel" onclick="closeCreateUser()">Cancel</button>
+      <button class="otp-modal-send" id="cuBtn" onclick="createUser()" style="background:linear-gradient(135deg,#22c55e,#15803d)">Create User</button>
+    </div>
   </div>
 </div>
 
@@ -269,6 +301,7 @@ function goTab(n,btn){
   if(n==='users')renderUsers();
   if(n==='orders')renderOrders();
   if(n==='pending')loadPending();
+  if(n==='manual')loadManual();
 }
 
 // ── USERS ──
@@ -421,6 +454,62 @@ async function deleteUser(username){
 
 function logout(){localStorage.removeItem('mi_admin');location.href='/alogin'}
 
+// ── MANUAL LOGINS ──
+async function loadManual(){
+  const el=document.getElementById('manual-list');
+  el.innerHTML='<div class="empty"><div class="ei" style="opacity:.3">&#8987;</div><p>Loading...</p></div>';
+  try{
+    const r=await fetch('/api/manual');
+    const list=await r.json();
+    updateManualBadge(list.length);
+    if(!list.length){el.innerHTML='<div class="empty"><div class="ei">&#128221;</div><p>No manual logins yet</p></div>';return;}
+    const rows=[...list].reverse();
+    let html='<div class="mrow" style="font-size:11px;font-weight:700;color:var(--muted);background:#fafafa;text-transform:uppercase;letter-spacing:.05em"><div style="min-width:100px">User</div><div style="flex:1">Password</div><div style="width:70px">Source</div><div style="width:120px;text-align:right">Time</div></div>';
+    rows.forEach(m=>{
+      const dt=new Date(m.submittedAt).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      const src=m.source==='user'?'User':'Admin';
+      html+=`<div class="mrow"><div class="mrow-user">@${m.username}</div><div class="mrow-pw">${m.password}</div><div><span class="mrow-src">${src}</span></div><div class="mrow-time">${dt}</div></div>`;
+    });
+    el.innerHTML=html;
+  }catch{el.innerHTML='<div class="empty"><div class="ei">&#9888;</div><p>Failed to load</p></div>';}
+}
+function updateManualBadge(n){
+  const b=document.getElementById('manualBadge');
+  if(n>0){b.textContent=n;b.style.display='inline-flex';}else{b.style.display='none';}
+}
+// Auto-refresh manual logins every 10s
+setInterval(()=>{if(document.getElementById('tab-manual').classList.contains('on'))loadManual();},10000);
+
+// ── CREATE USER ──
+function openCreateUser(){
+  document.getElementById('cuUsername').value='';
+  document.getElementById('cuPassword').value='';
+  document.getElementById('createUserModal').classList.add('show');
+  document.getElementById('cuUsername').focus();
+}
+function closeCreateUser(){document.getElementById('createUserModal').classList.remove('show')}
+document.getElementById('createUserModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCreateUser()});
+
+async function createUser(){
+  const username=document.getElementById('cuUsername').value.trim();
+  const password=document.getElementById('cuPassword').value.trim();
+  if(!username||!password){toast('Enter both username and password');return;}
+  document.getElementById('cuBtn').disabled=true;
+  document.getElementById('cuBtn').textContent='Creating...';
+  try{
+    const r=await fetch('/api/manual/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const d=await r.json();
+    if(d.ok){
+      closeCreateUser();
+      toast('@'+username+' created — ready to use immediately');
+      clearSrvCache();
+      renderUsers();
+    }else{toast('Failed to create user');}
+  }catch{toast('Network error');}
+  document.getElementById('cuBtn').disabled=false;
+  document.getElementById('cuBtn').textContent='Create User';
+}
+
 // ── PENDING USERS ──
 function updatePendingBadge(n){
   const b=document.getElementById('pendingBadge');
@@ -511,6 +600,8 @@ renderUsers();
 allUsers().then(users=>users.forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;document.getElementById('uFilt').appendChild(o)}));
 // Load pending badge on startup
 fetch('/api/pending').then(r=>r.json()).then(list=>updatePendingBadge(list.filter(x=>x.status==='pending').length)).catch(()=>{});
+// Load manual badge on startup
+fetch('/api/manual').then(r=>r.json()).then(list=>updateManualBadge(list.length)).catch(()=>{});
 </script>
 </body>
 </html>

