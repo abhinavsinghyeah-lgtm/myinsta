@@ -131,6 +131,15 @@
     .ocard-link{display:block;font-size:11px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .ocard-footer{display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:9px;border-top:1px solid var(--border)}
     .ocard-footer .date{font-size:11px;color:var(--muted)}
+    /* order progress bar */
+    .oprog-wrap{height:5px;background:#f0f0f4;border-radius:100px;overflow:hidden;margin:10px 0 5px}
+    .oprog-bar{height:100%;width:0%;border-radius:100px;transition:width 1.4s cubic-bezier(.4,0,.2,1);background:var(--grad)}
+    .oprog-bar.done{background:linear-gradient(90deg,#22c55e,#16a34a)}
+    .oprog-bar.warn{background:linear-gradient(90deg,#f59e0b,#d97706)}
+    .oprog-bar.dead{background:#e5e7eb;transition:none}
+    .oprog-meta{display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:2px}
+    .oprog-pct{font-weight:700;color:var(--text)}
+    .oprog-eta{color:var(--muted)}
 
     .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
     .bv{background:rgba(108,61,224,.1);color:#6c3de0}
@@ -368,10 +377,10 @@
     <section class="page" id="p-orders">
       <div class="pg-head"><h1>My Orders</h1><p>Track all your orders</p></div>
       <div class="ftabs">
-        <button class="ftab on" onclick="filt('all',this)">All</button>
-        <button class="ftab" onclick="filt('views',this)">Views</button>
-        <button class="ftab" onclick="filt('likes',this)">Likes</button>
-        <button class="ftab" onclick="filt('followers',this)">Followers</button>
+        <button class="ftab on" data-f="all" onclick="filt('all',this)">All</button>
+        <button class="ftab" data-f="views" onclick="filt('views',this)">Views</button>
+        <button class="ftab" data-f="likes" onclick="filt('likes',this)">Likes</button>
+        <button class="ftab" data-f="followers" onclick="filt('followers',this)">Followers</button>
       </div>
       <div id="olist"></div>
     </section>
@@ -480,7 +489,7 @@ function go(p){
   if(p==='views')initV();
   if(p==='likes')initL();
   if(p==='followers')initF();
-  if(p==='orders')renderOrders('all');
+  if(p==='orders'){renderOrders('all');startOrdPoll();}else{stopOrdPoll();}
   if(p==='referrals')initRef();
 }
 document.querySelectorAll('.ni[data-p]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.p)));
@@ -499,6 +508,32 @@ function status(o){
   return{label:'Processing',cls:'bp'};
 }
 function adminCls(s){const m={'Processing':'bp','In Progress':'bi','Delivered':'bd','Completed':'bd','Network Issue':'bp','Delayed':'bp','Cancelled':'bt'};return m[s]||'bp'}
+
+function orderProgress(o){
+  const lbl=status(o).label;
+  const elapsed=Date.now()-new Date(o.createdAt).getTime();
+  const totalMs=o.dh*3600000;
+  const t=Math.min(elapsed/totalMs,1); // 0–1 natural progress
+  let pct,cls,eta;
+  switch(lbl){
+    case 'Processing':  pct=2+t*20;      cls='';    eta='Starting soon…';  break;
+    case 'In Progress': pct=25+t*38;     cls='';    eta='In progress…';     break;
+    case 'Delivered':   pct=78+t*14;     cls='';    eta='Almost done…';     break;
+    case 'Completed':   pct=100;          cls='done';eta='Completed ✓';      break;
+    case 'Network Issue':pct=Math.min(65,25+t*38);cls='warn';eta='Network issue';break;
+    case 'Delayed':     pct=Math.min(65,25+t*38);cls='warn';eta='Delayed';       break;
+    case 'Cancelled':   pct=0;            cls='dead';eta='Cancelled';         break;
+    default:            pct=2;            cls='';    eta='Queued…';           break;
+  }
+  return{pct:Math.min(Math.round(pct),100),cls,eta};
+}
+function animateOrderBars(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.oprog-bar[data-pct]').forEach(el=>{
+      el.style.width=el.dataset.pct+'%';
+    });
+  }));
+}
 
 // ── Delivery reveal animation ──
 function showDel(boxId,loadId,lblId,timeId,hrs){
@@ -542,6 +577,7 @@ async function initOV(){
   document.getElementById('ov-dl-b').style.width=Math.min(dl.count/maxL*100,100)+'%';
   const rec=[...o].reverse().slice(0,3);
   document.getElementById('ov-rec').innerHTML=rec.length?buildOCards(rec):'<div class="empty"><div class="ei">📦</div><p>No orders yet</p></div>';
+  animateOrderBars();
 }
 
 // ── VIEWS ──
@@ -682,6 +718,7 @@ function buildOCards(rows){
   const tc={views:'bv',likes:'bl',followers:'bf'};
   return'<div class="olist">'+rows.map(o=>{
     const st=status(o);
+    const prog=orderProgress(o);
     const dt=new Date(o.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
     const lnk=o.link==='—'?'Profile':o.link.replace('https://www.instagram.com','…instagram.com');
     return`<div class="ocard">
@@ -694,17 +731,14 @@ function buildOCards(rows){
         <strong>${o.qty.toLocaleString()}</strong> ${tl[o.type].toLowerCase()} · ~${o.dh}h delivery
         <span class="ocard-link">${lnk}</span>
       </div>
+      <div class="oprog-meta"><span class="oprog-pct">${prog.pct}%</span><span class="oprog-eta">${prog.eta}</span></div>
+      <div class="oprog-wrap"><div class="oprog-bar ${prog.cls}" data-pct="${prog.pct}"></div></div>
       <div class="ocard-footer"><span class="date">${dt}</span></div>
     </div>`;
   }).join('')+'</div>';
 }
 
-function renderOrders(f){
-  const all=[...getOrders()].reverse();
-  const rows=f==='all'?all:all.filter(o=>o.type===f);
-  document.getElementById('olist').innerHTML=buildOCards(rows);
-}
-function filt(f,btn){document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderOrders(f)}
+function renderOrders(f){\n  const all=[...getOrders()].reverse();\n  const rows=f==='all'?all:all.filter(o=>o.type===f);\n  document.getElementById('olist').innerHTML=buildOCards(rows);\n  animateOrderBars();\n}\nfunction filt(f,btn){document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderOrders(f)}\n// Poll server for status updates every 30s while on orders page\nlet _ordPollTimer=null;\nfunction startOrdPoll(){_ordPollTimer=setInterval(syncOrdersFromServer,30000);syncOrdersFromServer();}\nfunction stopOrdPoll(){clearInterval(_ordPollTimer);}\nasync function syncOrdersFromServer(){\n  try{\n    const r=await fetch('/api/orders/'+encodeURIComponent(u));\n    const srv=await r.json();\n    if(!srv.length)return;\n    // Merge server side adminStatus into localStorage orders\n    const local=getOrders();\n    let changed=false;\n    srv.forEach(so=>{\n      const idx=local.findIndex(lo=>String(lo.id)===String(so.id));\n      if(idx>=0&&so.adminStatus&&local[idx].adminStatus!==so.adminStatus){local[idx].adminStatus=so.adminStatus;changed=true;}\n    });\n    if(changed){saveOrders(local);const f=document.querySelector('.ftab.on');if(f)renderOrders(f.dataset.f||'all');else renderOrders('all');}\n  }catch{}\n}
 
 // ── REFERRALS ──
 async function initRef(){
