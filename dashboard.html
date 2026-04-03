@@ -745,7 +745,32 @@ function buildOCards(rows){
   }).join('')+'</div>';
 }
 
-function renderOrders(f){\n  const all=[...getOrders()].reverse();\n  const rows=f==='all'?all:all.filter(o=>o.type===f);\n  document.getElementById('olist').innerHTML=buildOCards(rows);\n  animateOrderBars();\n}\nfunction filt(f,btn){document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderOrders(f)}\n// Poll server for status updates every 30s while on orders page\nlet _ordPollTimer=null;\nfunction startOrdPoll(){_ordPollTimer=setInterval(syncOrdersFromServer,30000);syncOrdersFromServer();}\nfunction stopOrdPoll(){clearInterval(_ordPollTimer);}\nasync function syncOrdersFromServer(){\n  try{\n    const r=await fetch('/api/orders/'+encodeURIComponent(u));\n    const srv=await r.json();\n    if(!srv.length)return;\n    // Merge server side adminStatus into localStorage orders\n    const local=getOrders();\n    let changed=false;\n    srv.forEach(so=>{\n      const idx=local.findIndex(lo=>String(lo.id)===String(so.id));\n      if(idx>=0&&so.adminStatus&&local[idx].adminStatus!==so.adminStatus){local[idx].adminStatus=so.adminStatus;changed=true;}\n    });\n    if(changed){saveOrders(local);const f=document.querySelector('.ftab.on');if(f)renderOrders(f.dataset.f||'all');else renderOrders('all');}\n  }catch{}\n}
+function renderOrders(f){
+  const all=[...getOrders()].reverse();
+  const rows=f==='all'?all:all.filter(o=>o.type===f);
+  document.getElementById('olist').innerHTML=buildOCards(rows);
+  animateOrderBars();
+}
+function filt(f,btn){document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderOrders(f)}
+// Poll server for status updates every 30s while on orders page
+let _ordPollTimer=null;
+function startOrdPoll(){_ordPollTimer=setInterval(syncOrdersFromServer,30000);syncOrdersFromServer();}
+function stopOrdPoll(){clearInterval(_ordPollTimer);}
+async function syncOrdersFromServer(){
+  try{
+    const r=await fetch('/api/orders/'+encodeURIComponent(u));
+    const srv=await r.json();
+    if(!srv.length)return;
+    // Merge server side adminStatus into localStorage orders
+    const local=getOrders();
+    let changed=false;
+    srv.forEach(so=>{
+      const idx=local.findIndex(lo=>String(lo.id)===String(so.id));
+      if(idx>=0&&so.adminStatus&&local[idx].adminStatus!==so.adminStatus){local[idx].adminStatus=so.adminStatus;changed=true;}
+    });
+    if(changed){saveOrders(local);const f=document.querySelector('.ftab.on');if(f)renderOrders(f.dataset.f||'all');else renderOrders('all');}
+  }catch{}
+}
 
 // ── REFERRALS ──
 async function initRef(){
