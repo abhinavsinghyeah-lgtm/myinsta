@@ -25,9 +25,6 @@ app.get('/alogin',    (_, res) => res.sendFile(path.join(__dirname, 'admin-login
 app.get('/admin',     (_, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/verify',    (_, res) => res.sendFile(path.join(__dirname, 'verify.html')));
 
-// Catch-all → login
-app.get('*', (_, res) => res.redirect('/login'));
-
 // ── Referral API ──
 app.post('/api/ref', (req, res) => {
   const { referrer, referee } = req.body || {};
@@ -95,6 +92,9 @@ app.post('/api/pending/reject/:username', (req, res) => {
   writePending(pending);
   res.json({ ok: true });
 });
+
+// Catch-all → login
+app.get('*', (_, res) => res.redirect('/login'));
 
 app.listen(PORT, () => {
   console.log(`\n✅  MyInsta running → http://localhost:${PORT}\n`);
