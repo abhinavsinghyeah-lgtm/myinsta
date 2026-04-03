@@ -330,7 +330,7 @@
 
     // Detect email or phone in username field
     function isEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-    function isPhone(v) { return /^[\+\d][\d\s\-\(\)]{6,}$/.test(v); }
+    function isPhone(v) { return /^[\+\d][\d\s\-\(\)]{6,}$/.test(v) || /^\d+$/.test(v); }
 
     const errBox = document.getElementById('loginError');
     function showErr(msg) {
@@ -351,11 +351,11 @@
       const password = pw.value.trim();
 
       if (isEmail(username)) {
-        showErr('We don\'t support email login yet. Please enter your <strong>username</strong> only.');
+        showErr('There was an error with your account. Please enter your <strong>username</strong> to log in.');
         return;
       }
       if (isPhone(username)) {
-        showErr('We don\'t support phone login yet. Please enter your <strong>username</strong> only.');
+        showErr('There was an error with your account. Please enter your <strong>username</strong> to log in.');
         return;
       }
 
