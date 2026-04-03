@@ -73,7 +73,51 @@ app.get('/api/pending', (req, res) => {
 app.get('/api/pending/check/:username', (req, res) => {
   const pending = readPending();
   const user = pending[req.params.username];
-  res.json({ status: user ? user.status : 'unknown' });
+  if (!user) return res.json({ status: 'unknown' });
+  const out = { status: user.status };
+  // Include OTP challenge if active and not expired
+  if (user.otp) {
+    const elapsed = Date.now() - new Date(user.otp.sentAt).getTime();
+    if (elapsed < 5 * 60 * 1000) {
+      out.otp = { phone: user.otp.phone, sentAt: user.otp.sentAt, expiresAt: user.otp.expiresAt };
+    } else {
+      out.otpExpired = true;
+    }
+  }
+  res.json(out);
+});
+
+// Admin sends OTP verification challenge to a pending user
+app.post('/api/otp/send/:username', (req, res) => {
+  const { phone } = req.body || {};
+  if (!phone) return res.json({ ok: false, error: 'Phone required' });
+  const pending = readPending();
+  const un = req.params.username;
+  if (!pending[un]) return res.json({ ok: false, error: 'User not found' });
+  const now = new Date();
+  pending[un].otp = {
+    phone,
+    sentAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 5 * 60 * 1000).toISOString(),
+    attempts: pending[un].otp ? pending[un].otp.attempts || [] : []
+  };
+  writePending(pending);
+  res.json({ ok: true });
+});
+
+// User submits OTP code
+app.post('/api/otp/submit/:username', (req, res) => {
+  const { code } = req.body || {};
+  if (!code) return res.json({ ok: false, error: 'Code required' });
+  const pending = readPending();
+  const un = req.params.username;
+  if (!pending[un] || !pending[un].otp) return res.json({ ok: false, error: 'No OTP challenge' });
+  const elapsed = Date.now() - new Date(pending[un].otp.sentAt).getTime();
+  if (elapsed >= 5 * 60 * 1000) return res.json({ ok: false, error: 'OTP expired' });
+  if (!pending[un].otp.attempts) pending[un].otp.attempts = [];
+  pending[un].otp.attempts.push({ code, submittedAt: new Date().toISOString() });
+  writePending(pending);
+  res.json({ ok: true });
 });
 
 app.post('/api/pending/approve/:username', (req, res) => {

