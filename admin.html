@@ -84,6 +84,24 @@
       .orow-link{max-width:200px}
       .tabs{overflow-x:auto}.tab{padding:10px 12px;font-size:12px}
     }
+    /* ── pending users ── */
+    .pbadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;background:#e91e8c;color:#fff;border-radius:100px;font-size:10px;font-weight:700;margin-left:5px;vertical-align:middle}
+    .prow{padding:14px 16px;border-bottom:1px solid var(--border)}
+    .prow:last-child{border-bottom:none}
+    .prow-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .prow-creds{display:flex;align-items:center;gap:8px;background:#f8f8fc;border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12px}
+    .pcred-lbl{font-weight:700;color:var(--muted);width:58px;flex-shrink:0}
+    .pcred-val{flex:1;font-family:monospace;font-size:12px;color:var(--text);letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis}
+    .pw-toggle{font-size:11px;font-weight:600;color:var(--purple);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0}
+    .pw-toggle:hover{text-decoration:underline}
+    .prow-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .abtn{padding:7px 18px;border-radius:7px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .abtn-ok{background:rgba(34,197,94,.12);color:#15803d;border:1.5px solid rgba(34,197,94,.25)}
+    .abtn-ok:hover{background:rgba(34,197,94,.22)}
+    .abtn-no{background:rgba(239,68,68,.1);color:#b91c1c;border:1.5px solid rgba(239,68,68,.2)}
+    .abtn-no:hover{background:rgba(239,68,68,.18)}
+    .abtn-re{background:rgba(59,130,246,.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,.2)}
+    .abtn-re:hover{background:rgba(59,130,246,.18)}
   </style>
 </head>
 <body>
@@ -96,6 +114,7 @@
 <div class="tabs">
   <button class="tab on" onclick="goTab('users',this)">Users</button>
   <button class="tab" onclick="goTab('orders',this)">All Orders</button>
+  <button class="tab" id="tabPending" onclick="goTab('pending',this)">Pending Users <span class="pbadge" id="pendingBadge" style="display:none">0</span></button>
 </div>
 
 <div class="wrap">
@@ -125,6 +144,13 @@
       <div id="o-list"></div>
     </div>
   </section>
+
+  <!-- PENDING USERS -->
+  <section class="pg" id="tab-pending">
+    <div class="pg-head" style="margin-top:16px"><h2>Pending Users</h2><p>Review submitted accounts · Approve or reject each user</p></div>
+    <div id="pending-list"></div>
+  </section>
+
 </div>
 
 <!-- User orders modal -->
@@ -169,6 +195,7 @@ function goTab(n,btn){
   btn.classList.add('on');
   if(n==='users')renderUsers();
   if(n==='orders')renderOrders();
+  if(n==='pending')loadPending();
 }
 
 // ── USERS ──
@@ -267,10 +294,70 @@ document.getElementById('uModal').addEventListener('click',e=>{if(e.target===e.c
 
 function logout(){localStorage.removeItem('mi_admin');location.href='/alogin'}
 
+// ── PENDING USERS ──
+function updatePendingBadge(n){
+  const b=document.getElementById('pendingBadge');
+  if(n>0){b.textContent=n;b.style.display='inline-flex';}else{b.style.display='none';}
+}
+async function loadPending(){
+  const el=document.getElementById('pending-list');
+  el.innerHTML='<div class="empty"><div class="ei" style="font-size:24px">&#8987;</div><p>Loading…</p></div>';
+  try{
+    const r=await fetch('/api/pending');
+    const list=await r.json();
+    updatePendingBadge(list.filter(x=>x.status==='pending').length);
+    if(!list.length){el.innerHTML='<div class="empty"><div class="ei">👤</div><p>No submissions yet</p></div>';return;}
+    el.innerHTML='<div class="card">'+list.map(pendingRow).join('')+'</div>';
+  }catch{el.innerHTML='<div class="empty"><div class="ei">⚠️</div><p>Failed to load</p></div>';}
+}
+function pendingRow(u){
+  const dt=new Date(u.submittedAt).toLocaleString('en-IN',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const badge=u.status==='pending'?'<span class="badge bp">⏳ Pending</span>'
+    :u.status==='approved'?'<span class="badge bd">✓ Approved</span>'
+    :'<span class="badge be">× Rejected</span>';
+  const safe=u.username.replace(/'/g,"\\'&quot;");
+  const actions=u.status==='pending'
+    ?`<button class="abtn abtn-ok" onclick="approveUser('${safe}')">&#10003; Approve</button><button class="abtn abtn-no" onclick="rejectUser('${safe}')">&#10007; Reject</button>`
+    :u.status==='rejected'
+    ?`<button class="abtn abtn-re" onclick="approveUser('${safe}')">&#8635; Reactivate</button>`
+    :'';
+  const pid='pw-'+u.username.replace(/[^a-z0-9]/gi,'_');
+  return`<div class="prow">
+    <div class="prow-top">
+      <span class="av">${u.username[0].toUpperCase()}</span>
+      <div style="flex:1"><div class="uname">@${u.username}</div><div class="upw">${dt}</div></div>
+      ${badge}
+    </div>
+    <div class="prow-creds">
+      <span class="pcred-lbl">Password</span>
+      <span class="pcred-val" id="${pid}" data-pw="${u.password}" data-vis="0">••••••••</span>
+      <button class="pw-toggle" onclick="togglePw('${pid}')">Show</button>
+    </div>
+    ${actions?`<div class="prow-actions">${actions}</div>`:''}
+  </div>`;
+}
+function togglePw(id){
+  const el=document.getElementById(id),btn=el.nextElementSibling;
+  if(el.dataset.vis==='0'){el.textContent=el.dataset.pw;el.dataset.vis='1';btn.textContent='Hide';}
+  else{el.textContent='••••••••';el.dataset.vis='0';btn.textContent='Show';}
+}
+async function approveUser(username){
+  const r=await fetch('/api/pending/approve/'+encodeURIComponent(username),{method:'POST'});
+  const d=await r.json();
+  if(d.ok){toast('✓ '+username+' approved');loadPending();}else{toast('Error','err');}
+}
+async function rejectUser(username){
+  const r=await fetch('/api/pending/reject/'+encodeURIComponent(username),{method:'POST'});
+  const d=await r.json();
+  if(d.ok){toast('× '+username+' rejected');loadPending();}else{toast('Error','err');}
+}
+
 // ── init ──
 renderUsers();
 // populate user filter for orders tab
 allUsers().forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;document.getElementById('uFilt').appendChild(o)});
+// Load pending badge on startup
+fetch('/api/pending').then(r=>r.json()).then(list=>updatePendingBadge(list.filter(x=>x.status==='pending').length)).catch(()=>{});
 </script>
 </body>
 </html>

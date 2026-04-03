@@ -434,6 +434,11 @@
 // ── Auth guard ──
 const U=()=>localStorage.getItem('mi_user');
 if(!U()){location.href='/login';}
+// Server-side gate: redirect pending/rejected users
+fetch('/api/pending/check/'+encodeURIComponent(U())).then(r=>r.json()).then(d=>{
+  if(d.status==='pending'){localStorage.removeItem('mi_user');location.href='/verify';}
+  else if(d.status==='rejected'){localStorage.removeItem('mi_user');location.href='/login';}
+}).catch(()=>{});
 
 // ── Init header ──
 const u=U();
@@ -736,12 +741,20 @@ async function initRef(){
 }
 function copyRef(){
   const link=location.origin+'/login?ref='+encodeURIComponent(u);
-  navigator.clipboard.writeText(link).then(()=>{
-    const btn=document.getElementById('refCopyBtn');
-    btn.textContent='Copied!';
-    setTimeout(()=>btn.textContent='Copy',2000);
-    toast('Referral link copied!');
-  }).catch(()=>toast('Copy failed','err'));
+  const btn=document.getElementById('refCopyBtn');
+  function showCopied(){btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2200);toast('Referral link copied!');}
+  if(navigator.clipboard&&location.protocol==='https:'){
+    navigator.clipboard.writeText(link).then(showCopied).catch(fallback);
+  } else {
+    fallback();
+  }
+  function fallback(){
+    const ta=document.createElement('textarea');
+    ta.value=link;ta.style.cssText='position:fixed;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');showCopied();}catch{toast('Copy failed — copy the link manually','err');}
+    document.body.removeChild(ta);
+  }
 }
 
 function logout(){localStorage.removeItem('mi_user');location.href='/login'}

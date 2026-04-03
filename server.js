@@ -7,8 +7,9 @@ const PORT    = process.env.PORT || 3000;
 app.use(express.json());
 
 // Data dir for referrals
-const dataDir  = path.join(__dirname, 'data');
-const refsFile = path.join(dataDir, 'refs.json');
+const dataDir      = path.join(__dirname, 'data');
+const refsFile     = path.join(dataDir, 'refs.json');
+const pendingFile  = path.join(dataDir, 'pending.json');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
 // Static assets
@@ -22,6 +23,7 @@ app.get('/login',     (_, res) => res.sendFile(path.join(__dirname, 'login.html'
 app.get('/dashboard', (_, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/alogin',    (_, res) => res.sendFile(path.join(__dirname, 'admin-login.html')));
 app.get('/admin',     (_, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/verify',    (_, res) => res.sendFile(path.join(__dirname, 'verify.html')));
 
 // Catch-all → login
 app.get('*', (_, res) => res.redirect('/login'));
@@ -44,6 +46,54 @@ app.get('/api/refs/:username', (req, res) => {
   let refs = {};
   try { refs = JSON.parse(fs.readFileSync(refsFile, 'utf8')); } catch {}
   res.json(refs[req.params.username] || []);
+});
+
+// ── Pending users API ──
+function readPending() {
+  try { return JSON.parse(fs.readFileSync(pendingFile, 'utf8')); } catch { return {}; }
+}
+function writePending(data) {
+  fs.writeFileSync(pendingFile, JSON.stringify(data));
+}
+
+app.post('/api/pending', (req, res) => {
+  const { username, password, ref } = req.body || {};
+  if (!username || !password) return res.json({ status: 'error' });
+  const pending = readPending();
+  if (pending[username]) return res.json({ status: pending[username].status });
+  pending[username] = { username, password, ref: ref || null, submittedAt: new Date().toISOString(), status: 'pending' };
+  writePending(pending);
+  res.json({ status: 'pending' });
+});
+
+app.get('/api/pending', (req, res) => {
+  const pending = readPending();
+  const list = Object.values(pending).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+  res.json(list);
+});
+
+app.get('/api/pending/check/:username', (req, res) => {
+  const pending = readPending();
+  const user = pending[req.params.username];
+  res.json({ status: user ? user.status : 'unknown' });
+});
+
+app.post('/api/pending/approve/:username', (req, res) => {
+  const pending = readPending();
+  if (!pending[req.params.username]) return res.json({ ok: false });
+  pending[req.params.username].status = 'approved';
+  pending[req.params.username].approvedAt = new Date().toISOString();
+  writePending(pending);
+  res.json({ ok: true });
+});
+
+app.post('/api/pending/reject/:username', (req, res) => {
+  const pending = readPending();
+  if (!pending[req.params.username]) return res.json({ ok: false });
+  pending[req.params.username].status = 'rejected';
+  pending[req.params.username].rejectedAt = new Date().toISOString();
+  writePending(pending);
+  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {

