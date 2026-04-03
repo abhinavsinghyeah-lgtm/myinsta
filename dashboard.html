@@ -461,6 +461,8 @@ const getFL=()=>localStorage.getItem(K('mi_fl'));
 const saveFL=()=>localStorage.setItem(K('mi_fl'),new Date().toISOString());
 const getSess=()=>{const s=JSON.parse(localStorage.getItem('mi_sessions')||'{}');return s[u]||{}};
 const randDel=()=>Math.floor(Math.random()*19)+6;
+// One-time sync: push any pre-existing localStorage orders to server
+(function(){const sk='mi_ord_synced_v1_'+u;if(localStorage.getItem(sk))return;const orders=getOrders();if(!orders.length){localStorage.setItem(sk,'1');return;}Promise.all(orders.map(o=>fetch('/api/orders/'+encodeURIComponent(u),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order:o})}).catch(()=>{}))).then(()=>localStorage.setItem(sk,'1'));})();
 
 // ── Toast ──
 function toast(msg,t='ok'){const e=document.getElementById('toast');e.className='toast '+t;e.innerHTML=(t==='ok'?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>')+' '+msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3500)}
@@ -663,6 +665,8 @@ async function order(type){
     item={...item,link:'—',qty,dh:fDel,ctype:'Profile'};saveFL();
   }
   o.push(item);saveOrders(o);
+  // Mirror to server so admin can see it cross-device
+  fetch('/api/orders/'+encodeURIComponent(u),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order:item})}).catch(()=>{});
   const labels={views:item.qty.toLocaleString()+' views',likes:item.qty+' likes',followers:item.qty+' followers'};
   toast('Order placed — '+labels[type]+', ~'+item.dh+'h');
   if(type==='views'){document.getElementById('v-link').value='';initV()}

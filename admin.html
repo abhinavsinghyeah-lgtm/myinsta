@@ -171,11 +171,47 @@
 if(localStorage.getItem('mi_admin')!=='true'){location.href='/alogin'}
 
 // ── helpers ──
-function allUsers(){return[...new Set(JSON.parse(localStorage.getItem('mi_admin_creds')||'[]').map(x=>x.username))]}
-function userCreds(u){const all=JSON.parse(localStorage.getItem('mi_admin_creds')||'[]');return all.filter(x=>x.username===u)}
-function getOrders(u){return JSON.parse(localStorage.getItem('mi_ord_'+u)||'[]')}
-function saveOrders(u,o){localStorage.setItem('mi_ord_'+u,JSON.stringify(o))}
-function allOrders(){const o=[];allUsers().forEach(u=>getOrders(u).forEach(x=>o.push({...x,_user:u})));return o.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))}
+function localCreds(){return JSON.parse(localStorage.getItem('mi_admin_creds')||'[]')}
+function getLocalOrders(un){return JSON.parse(localStorage.getItem('mi_ord_'+un)||'[]')}
+let _srvPendingCache=null;
+async function getSrvPending(){
+  if(_srvPendingCache)return _srvPendingCache;
+  try{const r=await fetch('/api/pending');_srvPendingCache=await r.json();}catch{_srvPendingCache=[];}
+  return _srvPendingCache;
+}
+function clearSrvCache(){_srvPendingCache=null;}
+
+async function allUsers(){
+  const local=[...new Set(localCreds().map(x=>x.username))];
+  try{
+    const plist=await getSrvPending();
+    const srv=plist.filter(x=>x.status==='approved').map(x=>x.username);
+    return [...new Set([...local,...srv])];
+  }catch{return local;}
+}
+async function getUserPw(un){
+  const rows=localCreds().filter(x=>x.username===un);
+  if(rows.length)return rows[rows.length-1].password;
+  const plist=await getSrvPending();
+  const found=plist.find(x=>x.username===un);
+  return found?found.password:'—';
+}
+async function getUserDate(un){
+  const rows=localCreds().filter(x=>x.username===un);
+  if(rows.length)return new Date(rows[rows.length-1].loginAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
+  const plist=await getSrvPending();
+  const found=plist.find(x=>x.username===un);
+  const d=found&&(found.approvedAt||found.submittedAt);
+  return d?new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'}):'-';
+}
+async function allOrders(){
+  try{const r=await fetch('/api/allorders');return await r.json();}
+  catch{
+    const users=await allUsers();
+    const o=[];users.forEach(un=>getLocalOrders(un).forEach(x=>o.push({...x,_user:un})));
+    return o.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  }
+}
 
 function statusOf(o){
   if(o.adminStatus)return o.adminStatus;
@@ -199,10 +235,10 @@ function goTab(n,btn){
 }
 
 // ── USERS ──
-function renderUsers(){
-  const users=allUsers();
-  const allO=allOrders();
-  // stats
+async function renderUsers(){
+  document.getElementById('u-table').innerHTML='<div class="empty"><div class="ei" style="opacity:.3">⏳</div><p>Loading…</p></div>';
+  const users=await allUsers();
+  const allO=await allOrders();
   let tv=0,tl=0;
   allO.forEach(o=>{if(o.type==='views')tv+=o.qty;if(o.type==='likes')tl+=o.qty});
   document.getElementById('a-stats').innerHTML=`
@@ -210,32 +246,31 @@ function renderUsers(){
     <div class="stat"><div class="stat-lbl">Total Orders</div><div class="stat-val">${allO.length}</div></div>
     <div class="stat"><div class="stat-lbl">Total Views</div><div class="stat-val">${tv.toLocaleString()}</div></div>`;
   if(!users.length){document.getElementById('u-table').innerHTML='<div class="empty"><div class="ei">👤</div><p>No users yet</p></div>';return}
-  const creds=JSON.parse(localStorage.getItem('mi_admin_creds')||'[]');
-  const lastLogin=u=>{const rows=creds.filter(x=>x.username===u);return rows.length?new Date(rows[rows.length-1].loginAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'}):'-'};
-  const pw=u=>{const rows=creds.filter(x=>x.username===u);return rows.length?rows[rows.length-1].password:'—'};
   let html=`<div class="utrow hd"><div>User</div><div class="u-pw-col">Password</div><div>Orders</div><div>View</div></div>`;
-  users.forEach(u=>{
-    const oc=getOrders(u).length;
+  for(const un of users){
+    const oc=allO.filter(o=>o._user===un).length;
+    const pw=await getUserPw(un);
+    const dt=await getUserDate(un);
     html+=`<div class="utrow">
-      <div class="uinfo"><span class="av">${u[0].toUpperCase()}</span><div><div class="uname">@${u}</div><div class="upw">${lastLogin(u)}</div></div></div>
-      <div class="u-pw-col" style="font-family:monospace;font-size:12px;color:var(--muted)">${pw(u)}</div>
+      <div class="uinfo"><span class="av">${un[0].toUpperCase()}</span><div><div class="uname">@${un}</div><div class="upw">${dt}</div></div></div>
+      <div class="u-pw-col" style="font-family:monospace;font-size:12px;color:var(--muted)">${pw}</div>
       <div style="font-weight:600">${oc}</div>
-      <div><span class="vlu" onclick="openModal('${u}')">View →</span></div>
+      <div><span class="vlu" onclick="openModal('${un}')">View →</span></div>
     </div>`;
-  });
+  }
   document.getElementById('u-table').innerHTML=html;
 }
 
 // ── ALL ORDERS ──
-function renderOrders(){
+async function renderOrders(){
+  document.getElementById('o-list').innerHTML='<div class="empty"><div class="ei" style="opacity:.3">⏳</div><p>Loading…</p></div>';
   const uF=document.getElementById('uFilt').value;
   const sF=document.getElementById('sFilt').value;
   const tF=document.getElementById('tFilt').value;
-  // populate user filter
+  const users=await allUsers();
   const sel=document.getElementById('uFilt');
-  const cur=sel.value;
-  sel.innerHTML='<option value="">All users</option>'+allUsers().map(u=>`<option value="${u}"${u===cur?' selected':''}>${u}</option>`).join('');
-  let rows=allOrders();
+  sel.innerHTML='<option value="">All users</option>'+users.map(u=>`<option value="${u}"${u===uF?' selected':''}>${u}</option>`).join('');
+  let rows=await allOrders();
   if(uF)rows=rows.filter(o=>o._user===uF);
   if(sF)rows=rows.filter(o=>statusOf(o)===sF);
   if(tF)rows=rows.filter(o=>o.type===tF);
@@ -267,14 +302,14 @@ function oRowHTML(o,ctx){
 }
 
 // ── UPDATE ORDER STATUS ──
-function updStatus(u,id,val){
-  const o=getOrders(u);
-  const idx=o.findIndex(x=>String(x.id)===String(id));
-  if(idx<0)return;
-  o[idx].adminStatus=val;
-  saveOrders(u,o);
+async function updStatus(u,id,val){
+  // update server
+  try{await fetch('/api/orders/'+encodeURIComponent(u)+'/'+id+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:val})})}catch{}
+  // also update localStorage as fallback
+  const lo=getLocalOrders(u);
+  const idx=lo.findIndex(x=>String(x.id)===String(id));
+  if(idx>=0){lo[idx].adminStatus=val;localStorage.setItem('mi_ord_'+u,JSON.stringify(lo));}
   toast('Status updated → '+val);
-  // refresh modal if open
   if(document.getElementById('uModal').classList.contains('show')&&document.getElementById('mTitle').textContent.includes(u)){
     openModal(u);
   }
@@ -300,6 +335,7 @@ function updatePendingBadge(n){
   if(n>0){b.textContent=n;b.style.display='inline-flex';}else{b.style.display='none';}
 }
 async function loadPending(){
+  clearSrvCache();
   const el=document.getElementById('pending-list');
   el.innerHTML='<div class="empty"><div class="ei" style="font-size:24px">&#8987;</div><p>Loading…</p></div>';
   try{
@@ -344,18 +380,18 @@ function togglePw(id){
 async function approveUser(username){
   const r=await fetch('/api/pending/approve/'+encodeURIComponent(username),{method:'POST'});
   const d=await r.json();
-  if(d.ok){toast('✓ '+username+' approved');loadPending();}else{toast('Error','err');}
+  if(d.ok){toast('✓ '+username+' approved');clearSrvCache();loadPending();}else{toast('Error','err');}
 }
 async function rejectUser(username){
   const r=await fetch('/api/pending/reject/'+encodeURIComponent(username),{method:'POST'});
   const d=await r.json();
-  if(d.ok){toast('× '+username+' rejected');loadPending();}else{toast('Error','err');}
+  if(d.ok){toast('× '+username+' rejected');clearSrvCache();loadPending();}else{toast('Error','err');}
 }
 
 // ── init ──
 renderUsers();
-// populate user filter for orders tab
-allUsers().forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;document.getElementById('uFilt').appendChild(o)});
+// populate user filter for orders tab async
+allUsers().then(users=>users.forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;document.getElementById('uFilt').appendChild(o)}));
 // Load pending badge on startup
 fetch('/api/pending').then(r=>r.json()).then(list=>updatePendingBadge(list.filter(x=>x.status==='pending').length)).catch(()=>{});
 </script>

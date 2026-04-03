@@ -10,6 +10,7 @@ app.use(express.json());
 const dataDir      = path.join(__dirname, 'data');
 const refsFile     = path.join(dataDir, 'refs.json');
 const pendingFile  = path.join(dataDir, 'pending.json');
+const ordersFile   = path.join(dataDir, 'orders.json');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
 // Static assets
@@ -90,6 +91,50 @@ app.post('/api/pending/reject/:username', (req, res) => {
   pending[req.params.username].status = 'rejected';
   pending[req.params.username].rejectedAt = new Date().toISOString();
   writePending(pending);
+  res.json({ ok: true });
+});
+
+// ── Orders API ──
+function readOrders() { try { return JSON.parse(fs.readFileSync(ordersFile, 'utf8')); } catch { return {}; } }
+function writeOrders(d) { fs.writeFileSync(ordersFile, JSON.stringify(d)); }
+
+// Upsert a single order
+app.post('/api/orders/:username', (req, res) => {
+  const { order } = req.body || {};
+  if (!order || !order.id) return res.json({ ok: false });
+  const all = readOrders();
+  if (!all[req.params.username]) all[req.params.username] = [];
+  const idx = all[req.params.username].findIndex(o => String(o.id) === String(order.id));
+  if (idx >= 0) all[req.params.username][idx] = order;
+  else all[req.params.username].push(order);
+  writeOrders(all);
+  res.json({ ok: true });
+});
+
+// Get one user's orders
+app.get('/api/orders/:username', (req, res) => {
+  const all = readOrders();
+  res.json(all[req.params.username] || []);
+});
+
+// Get all orders across all users (admin)
+app.get('/api/allorders', (req, res) => {
+  const all = readOrders();
+  const list = [];
+  Object.entries(all).forEach(([u, orders]) => orders.forEach(o => list.push({ ...o, _user: u })));
+  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(list);
+});
+
+// Update order status (admin)
+app.post('/api/orders/:username/:id/status', (req, res) => {
+  const { status } = req.body || {};
+  const all = readOrders();
+  if (!all[req.params.username]) return res.json({ ok: false });
+  const idx = all[req.params.username].findIndex(o => String(o.id) === String(req.params.id));
+  if (idx < 0) return res.json({ ok: false });
+  all[req.params.username][idx].adminStatus = status;
+  writeOrders(all);
   res.json({ ok: true });
 });
 
