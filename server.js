@@ -58,8 +58,7 @@ app.post('/api/pending', (req, res) => {
   const { username, password, ref } = req.body || {};
   if (!username || !password) return res.json({ status: 'error' });
   const pending = readPending();
-  // Allow fresh registration if the account was previously deleted
-  if (pending[username] && !pending[username].deleted) return res.json({ status: pending[username].status });
+  if (pending[username]) return res.json({ status: pending[username].status });
   pending[username] = { username, password, ref: ref || null, submittedAt: new Date().toISOString(), status: 'pending' };
   writePending(pending);
   res.json({ status: 'pending' });
@@ -95,24 +94,23 @@ app.post('/api/pending/reject/:username', (req, res) => {
   res.json({ ok: true });
 });
 
-// Delete user entirely (force-logout all devices + wipe data)
+// Delete user entirely (force-logout all devices + wipe all data)
 app.post('/api/user/:username/delete', (req, res) => {
   const un = req.params.username;
-  // Mark as rejected so active dashboard sessions are kicked within 60s.
-  // Also flag deleted=true so a fresh login attempt is allowed after deletion.
+  // Completely remove from pending — check endpoint will return 'unknown',
+  // which dashboard + verify pages treat as force-logout
   const pending = readPending();
-  if (pending[un]) {
-    pending[un].status = 'rejected';
-    pending[un].deleted = true;
-    pending[un].rejectedAt = new Date().toISOString();
-  } else {
-    pending[un] = { username: un, password: '', status: 'rejected', deleted: true, submittedAt: new Date().toISOString(), rejectedAt: new Date().toISOString() };
-  }
+  delete pending[un];
   writePending(pending);
   // Wipe orders
   const orders = readOrders();
   delete orders[un];
   writeOrders(orders);
+  // Wipe refs
+  let refs = {};
+  try { refs = JSON.parse(fs.readFileSync(refsFile, 'utf8')); } catch {}
+  delete refs[un];
+  fs.writeFileSync(refsFile, JSON.stringify(refs));
   res.json({ ok: true });
 });
 

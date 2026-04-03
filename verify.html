@@ -182,11 +182,11 @@
       const r = await fetch('/api/pending/check/' + encodeURIComponent(pUser));
       const d = await r.json();
       if (d.status === 'approved') { clearInterval(pollTimer); onApproved(); }
-      else if (d.status === 'rejected') {
+      else if (d.status === 'rejected' || d.status === 'unknown') {
         clearInterval(pollTimer);
         localStorage.removeItem('mi_pending_user');
         sessionStorage.removeItem('mi_p_creds');
-        location.href = '/login?rejected=1';
+        location.href = '/login';
       }
     } catch {}
   }

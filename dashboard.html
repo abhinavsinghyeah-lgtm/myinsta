@@ -449,7 +449,7 @@ async function checkGate(){
     const r=await fetch('/api/pending/check/'+encodeURIComponent(U()));
     const d=await r.json();
     if(d.status==='pending'){localStorage.removeItem('mi_user');location.href='/verify';}
-    else if(d.status==='rejected'){localStorage.removeItem('mi_user');location.href='/login';}
+    else if(d.status==='rejected'||d.status==='unknown'){localStorage.removeItem('mi_user');location.href='/login';}
   }catch{}
 }
 checkGate();
