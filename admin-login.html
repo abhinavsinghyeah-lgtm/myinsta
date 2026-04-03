@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login — MyInsta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',-apple-system,sans-serif;background:#0f0f18;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;-webkit-font-smoothing:antialiased}
+    .wrap{width:100%;max-width:380px}
+    .logo{text-align:center;margin-bottom:28px}
+    .logo-icon{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#f9a825 0%,#e91e8c 50%,#6c3de0 100%);margin-bottom:12px}
+    .logo-icon svg{display:block}
+    .logo h1{font-size:22px;font-weight:800;color:#fff}
+    .logo p{font-size:13px;color:rgba(255,255,255,.35);margin-top:3px}
+    .card{background:#1a1a2a;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:28px 24px}
+    .fgroup{margin-bottom:16px}
+    label{display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,.45);margin-bottom:6px}
+    input{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.09);border-radius:8px;padding:11px 13px;font-size:14px;color:#fff;outline:none;font-family:'Inter',sans-serif;transition:border .15s}
+    input::placeholder{color:rgba(255,255,255,.2)}
+    input:focus{border-color:rgba(233,30,140,.5);background:rgba(255,255,255,.06)}
+    .err{color:#f87171;font-size:12.5px;font-weight:500;display:none;margin-bottom:10px;padding:9px 12px;background:rgba(239,68,68,.1);border-radius:7px}
+    .err.show{display:block}
+    .btn{width:100%;padding:12px;background:linear-gradient(135deg,#f9a825 0%,#e91e8c 50%,#6c3de0 100%);color:#fff;font-size:14px;font-weight:700;border-radius:9px;border:none;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:.3px;transition:opacity .2s,transform .15s;margin-top:4px}
+    .btn:hover{opacity:.88;transform:translateY(-1px)}
+    .btn:active{transform:scale(.98)}
+    .foot{text-align:center;margin-top:16px;font-size:12px;color:rgba(255,255,255,.2)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" stroke="#fff" stroke-width="2" fill="none"/>
+        <circle cx="12" cy="10" r="3" stroke="#fff" stroke-width="2" fill="none"/>
+      </svg>
+    </div>
+    <h1>Admin Portal</h1>
+    <p>MyInsta control panel</p>
+  </div>
+  <div class="card">
+    <div class="fgroup">
+      <label>Username</label>
+      <input type="text" id="usr" placeholder="Enter admin username" autocomplete="off"/>
+    </div>
+    <div class="fgroup">
+      <label>Password</label>
+      <input type="password" id="pw" placeholder="Enter admin password"/>
+    </div>
+    <div class="err" id="err">Incorrect credentials. Try again.</div>
+    <button class="btn" onclick="login()">Sign In as Admin</button>
+  </div>
+  <div class="foot">MyInsta · Restricted Access</div>
+</div>
+<script>
+  if(localStorage.getItem('mi_admin')==='true'){location.href='/admin'}
+  document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+  function login(){
+    const u=document.getElementById('usr').value.trim();
+    const p=document.getElementById('pw').value;
+    const e=document.getElementById('err');
+    if(u==='abhinavsingh'&&p==='MAHA8411'){localStorage.setItem('mi_admin','true');location.href='/admin'}
+    else{e.classList.add('show');document.getElementById('pw').value='';setTimeout(()=>e.classList.remove('show'),3000)}
+  }
+</script>
+</body>
+</html>

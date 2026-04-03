@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — MyInsta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --grad:linear-gradient(135deg,#f9a825 0%,#e91e8c 50%,#6c3de0 100%);
+      --pink:#e91e8c;--purple:#6c3de0;
+      --sb:#0f0f18;--sb-w:220px;
+      --bg:#f3f4f8;--card:#fff;--border:#e8e8ee;
+      --text:#1a1a2e;--muted:#6b7280;
+      --r:12px;--font:'Inter',-apple-system,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:14px}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button{cursor:pointer;border:none;background:none;font-family:var(--font)}
+    input,select{font-family:var(--font)}
+
+    /* ── Sidebar ── */
+    .sb{width:var(--sb-w);background:var(--sb);height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:300;transition:transform .3s ease}
+    .sb-logo{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:9px}
+    .sb-logo-name{font-size:18px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .sb-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+    .ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,.4);transition:all .2s;width:100%;text-align:left}
+    .ni svg{flex-shrink:0}
+    .ni:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+    .ni.on{background:rgba(233,30,140,.14);color:#f472b6}
+    .sb-foot{padding:12px 8px;border-top:1px solid rgba(255,255,255,.06)}
+    .sb-user{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;background:rgba(255,255,255,.04);margin-bottom:4px}
+    .sb-av{width:28px;height:28px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+    .sb-uname{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .btn-lo{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,.3);transition:all .2s;width:100%}
+    .btn-lo:hover{background:rgba(239,68,68,.1);color:#f87171}
+
+    /* ── Main ── */
+    .main{margin-left:var(--sb-w);display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--card);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100}
+    .hamburger{display:none;flex-direction:column;gap:4px;padding:6px;border-radius:6px}
+    .hamburger span{display:block;width:18px;height:2px;background:var(--text);border-radius:2px}
+    .pg-title{font-size:15px;font-weight:700;flex:1}
+    .u-chip{display:flex;align-items:center;gap:6px;background:rgba(233,30,140,.07);padding:4px 12px;border-radius:100px;font-size:12px;font-weight:600;color:var(--pink)}
+    .content{padding:16px;flex:1;max-width:600px;width:100%;margin:0 auto}
+
+    /* ── Pages ── */
+    .page{display:none}
+    .page.on{display:block}
+    .pg-head{margin-bottom:18px}
+    .pg-head h1{font-size:19px;font-weight:800;margin-bottom:3px}
+    .pg-head p{font-size:13px;color:var(--muted)}
+
+    /* ── Cards ── */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+    .card+.card{margin-top:12px}
+    .card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:14px;color:var(--text)}
+
+    /* ── Stats ── */
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+    .sc-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px}
+    .sc-val{font-size:24px;font-weight:800;line-height:1}
+    .sc-icon{float:right;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+
+    /* ── Limit bars ── */
+    .lcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+    .lrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;font-weight:600}
+    .lrow span:last-child{font-size:11px;color:var(--muted);font-weight:500}
+    .lbar{height:5px;background:#f0f0f0;border-radius:100px;overflow:hidden}
+    .lbar-f{height:100%;border-radius:100px;background:var(--grad);transition:width .4s}
+
+    /* ── Form ── */
+    .fgroup{margin-bottom:15px}
+    .flabel{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text)}
+    .flabel span{color:var(--muted);font-weight:400}
+    .finput{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);outline:none;background:#fafafa;transition:border .15s}
+    .finput:focus{border-color:var(--pink);background:#fff}
+    .finput::placeholder{color:#bbb}
+
+    /* type toggle */
+    .type-row{display:flex;gap:8px}
+    .tb{flex:1;padding:9px 6px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;color:var(--muted);background:#fafafa;transition:all .2s;text-align:center}
+    .tb.on{border-color:var(--pink);color:var(--pink);background:rgba(233,30,140,.06)}
+
+    /* slider */
+    .srow{display:flex;align-items:center;gap:10px}
+    input[type=range]{flex:1;-webkit-appearance:none;height:4px;border-radius:100px;background:#e5e7eb;outline:none}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--pink);cursor:pointer;box-shadow:0 2px 6px rgba(233,30,140,.35)}
+    .qin{width:68px;border:1.5px solid var(--border);border-radius:7px;padding:7px 8px;font-size:14px;font-weight:700;color:var(--text);text-align:center;outline:none}
+    .qin:focus{border-color:var(--pink)}
+    .rtag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:100px;margin-top:6px}
+    .rt-ok{background:rgba(34,197,94,.1);color:#15803d}
+    .rt-low{background:rgba(234,179,8,.1);color:#b45309}
+    .rt-out{background:rgba(239,68,68,.1);color:#b91c1c}
+
+    /* delivery */
+    .del-box{display:none;align-items:center;gap:10px;background:rgba(108,61,224,.06);border:1px solid rgba(108,61,224,.14);border-radius:9px;padding:12px 14px;margin-bottom:14px}
+    .del-box.show{display:flex}
+    .del-box .dl{font-size:12px;color:var(--muted)}
+    .del-box .dt{margin-left:auto;font-size:18px;font-weight:800;color:var(--purple)}
+    .del-loader{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+    .spin{width:14px;height:14px;border:2px solid rgba(108,61,224,.2);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* banner */
+    .banner{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:8px;font-size:12.5px;font-weight:500;margin-bottom:14px;line-height:1.5}
+    .banner svg{flex-shrink:0;margin-top:1px}
+    .ban-info{background:rgba(108,61,224,.07);border:1px solid rgba(108,61,224,.14);color:var(--text)}
+    .ban-warn{background:rgba(234,179,8,.07);border:1px solid rgba(234,179,8,.2);color:#78350f}
+    .ban-lock{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.14);color:#7f1d1d}
+
+    /* button */
+    .btn-main{width:100%;padding:12px;background:var(--grad);color:#fff;font-size:14px;font-weight:700;border-radius:9px;border:none;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .2s,transform .15s;letter-spacing:.3px}
+    .btn-main:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}
+    .btn-main:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+    /* ── Orders ── */
+    .ftabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+    .ftab{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--card);color:var(--muted);transition:all .2s}
+    .ftab.on{background:var(--pink);border-color:var(--pink);color:#fff}
+
+    .olist{display:flex;flex-direction:column;gap:8px}
+    .ocard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px}
+    .ocard-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .ocard-body{font-size:12px;color:var(--muted);line-height:1.7}
+    .ocard-body strong{color:var(--text)}
+    .ocard-link{display:block;font-size:11px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ocard-footer{display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:9px;border-top:1px solid var(--border)}
+    .ocard-footer .date{font-size:11px;color:var(--muted)}
+
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+    .bv{background:rgba(108,61,224,.1);color:#6c3de0}
+    .bl{background:rgba(233,30,140,.1);color:#e91e8c}
+    .bf{background:rgba(249,168,37,.12);color:#92400e}
+    .bp{background:rgba(234,179,8,.1);color:#b45309}
+    .bi{background:rgba(59,130,246,.1);color:#1d4ed8}
+    .bd{background:rgba(34,197,94,.1);color:#15803d}
+
+    .empty{text-align:center;padding:40px 16px;color:var(--muted)}
+    .empty .ei{font-size:36px;margin-bottom:10px;opacity:.3}
+
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a2e;color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.2);display:flex;align-items:center;gap:9px;z-index:9999;opacity:0;transition:all .3s ease;white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+    .toast.ok{border-left:3px solid #22c55e}
+    .toast.err{border-left:3px solid #ef4444}
+
+    /* ── Overlay ── */
+    .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200}
+    .ov.show{display:block}
+
+    /* ── Mobile ── */
+    @media(max-width:680px){
+      .sb{transform:translateX(-100%)}
+      .sb.open{transform:translateX(0)}
+      .main{margin-left:0}
+      .hamburger{display:flex}
+      .content{padding:12px}
+    }
+  </style>
+</head>
+<body>
+
+<aside class="sb" id="sb">
+  <div class="sb-logo">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <defs><linearGradient id="lg" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f9a825"/><stop offset="40%" stop-color="#e91e8c"/><stop offset="100%" stop-color="#6c3de0"/></linearGradient></defs>
+      <rect x="2" y="2" width="20" height="20" rx="6" stroke="url(#lg)" stroke-width="2" fill="none"/>
+      <circle cx="12" cy="12" r="4" stroke="url(#lg)" stroke-width="2" fill="none"/>
+      <circle cx="17.5" cy="6.5" r="1.2" fill="url(#lg)"/>
+    </svg>
+    <span class="sb-logo-name">MyInsta</span>
+  </div>
+  <nav class="sb-nav">
+    <button class="ni" data-p="overview">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Overview
+    </button>
+    <button class="ni" data-p="views">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Add Views
+    </button>
+    <button class="ni" data-p="likes">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Add Likes
+    </button>
+    <button class="ni" data-p="followers">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Add Followers
+    </button>
+    <button class="ni" data-p="orders">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>My Orders
+    </button>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="sb-av" id="sbAv">U</div>
+      <span class="sb-uname" id="sbUn">…</span>
+    </div>
+    <button class="btn-lo" onclick="logout()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Log out
+    </button>
+  </div>
+</aside>
+
+<div class="ov" id="ov" onclick="closeSb()"></div>
+
+<div class="main">
+  <header class="topbar">
+    <button class="hamburger" onclick="openSb()"><span></span><span></span><span></span></button>
+    <span class="pg-title" id="pgTitle">Overview</span>
+    <div class="u-chip"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span id="tcUser"></span></div>
+  </header>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <section class="page" id="p-overview">
+      <div class="pg-head"><h1 id="greet">Hey 👋</h1><p>Your activity at a glance</p></div>
+      <div class="stats-grid">
+        <div class="sc"><div class="sc-icon" style="background:rgba(108,61,224,.1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6c3de0" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="sc-label">Total Views</div><div class="sc-val" id="ov-v">0</div></div>
+        <div class="sc"><div class="sc-icon" style="background:rgba(233,30,140,.1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="#e91e8c"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="sc-label">Total Likes</div><div class="sc-val" id="ov-l">0</div></div>
+        <div class="sc"><div class="sc-icon" style="background:rgba(249,168,37,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="sc-label">Followers</div><div class="sc-val" id="ov-f">0</div></div>
+        <div class="sc"><div class="sc-icon" style="background:rgba(34,197,94,.1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="sc-label">Active Orders</div><div class="sc-val" id="ov-a">0</div></div>
+      </div>
+      <div class="lcard">
+        <div class="lrow"><span>👁 Views Today</span><span id="ov-dv-t">0 / 1,000</span></div>
+        <div class="lbar"><div class="lbar-f" id="ov-dv-b" style="width:0%"></div></div>
+      </div>
+      <div class="lcard">
+        <div class="lrow"><span>❤️ Likes Today</span><span id="ov-dl-t">0 / 200</span></div>
+        <div class="lbar"><div class="lbar-f" id="ov-dl-b" style="width:0%"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Recent Orders</div>
+        <div id="ov-rec"></div>
+      </div>
+    </section>
+
+    <!-- ADD VIEWS -->
+    <section class="page" id="p-views">
+      <div class="pg-head"><h1>Add Views</h1><p>Reels only · 100–1,000 per day · Free</p></div>
+      <div class="banner ban-info">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6c3de0" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><strong>Reels only</strong> · Max <strong>1,000 views/day</strong> · Resets midnight</span>
+      </div>
+      <div class="card">
+        <div class="fgroup">
+          <label class="flabel">Reel URL</label>
+          <input type="url" class="finput" id="v-link" placeholder="https://www.instagram.com/reel/…"/>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Views <span>(100 – 1,000)</span></label>
+          <div class="srow"><input type="range" id="v-sl" min="100" max="1000" step="50" value="500"/><input type="number" class="qin" id="v-num" min="100" max="1000" value="500"/></div>
+          <span class="rtag rt-ok" id="v-rem">✓ 1,000 remaining today</span>
+        </div>
+        <div class="del-box" id="v-del-box">
+          <div class="del-loader" id="v-del-load"><div class="spin"></div>Calculating…</div>
+          <span class="dl" id="v-del-lbl" style="display:none">Estimated delivery</span>
+          <span class="dt" id="v-del-t" style="display:none"></span>
+        </div>
+        <button class="btn-main" id="v-btn" onclick="order('views')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>PLACE ORDER
+        </button>
+      </div>
+    </section>
+
+    <!-- ADD LIKES -->
+    <section class="page" id="p-likes">
+      <div class="pg-head"><h1>Add Likes</h1><p>Posts & Reels · 100–200 per day · Free</p></div>
+      <div class="banner ban-info">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6c3de0" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><strong>Post &amp; Reels</strong> · Max <strong>200 likes/day</strong> · Resets midnight</span>
+      </div>
+      <div class="card">
+        <div class="fgroup">
+          <label class="flabel">Content Type</label>
+          <div class="type-row">
+            <button class="tb on" id="l-post" onclick="ltype('post')">📷 Post</button>
+            <button class="tb" id="l-reel" onclick="ltype('reel')">🎬 Reel</button>
+          </div>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Post / Reel URL</label>
+          <input type="url" class="finput" id="l-link" placeholder="https://www.instagram.com/p/…"/>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Likes <span>(100 – 200)</span></label>
+          <div class="srow"><input type="range" id="l-sl" min="100" max="200" step="10" value="150"/><input type="number" class="qin" id="l-num" min="100" max="200" value="150"/></div>
+          <span class="rtag rt-ok" id="l-rem">✓ 200 remaining today</span>
+        </div>
+        <div class="del-box" id="l-del-box">
+          <div class="del-loader" id="l-del-load"><div class="spin"></div>Calculating…</div>
+          <span class="dl" id="l-del-lbl" style="display:none">Estimated delivery</span>
+          <span class="dt" id="l-del-t" style="display:none;color:var(--pink)"></span>
+        </div>
+        <button class="btn-main" id="l-btn" onclick="order('likes')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>PLACE ORDER
+        </button>
+      </div>
+    </section>
+
+    <!-- ADD FOLLOWERS -->
+    <section class="page" id="p-followers">
+      <div class="pg-head"><h1>Add Followers</h1><p>10–100 · Once every 5 days · Unlocks 5 days after join</p></div>
+      <div id="f-locked" style="display:none">
+        <div class="banner ban-lock">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div><div style="font-weight:700;margin-bottom:2px" id="f-lt"></div><div id="f-ls"></div></div>
+        </div>
+      </div>
+      <div id="f-avail" style="display:none">
+        <div class="card">
+          <div class="fgroup">
+            <label class="flabel">Followers <span>(10 – 100)</span></label>
+            <div class="srow"><input type="range" id="f-sl" min="10" max="100" step="5" value="50"/><input type="number" class="qin" id="f-num" min="10" max="100" value="50"/></div>
+          </div>
+          <div class="del-box" id="f-del-box">
+            <div class="del-loader" id="f-del-load"><div class="spin"></div>Calculating…</div>
+            <span class="dl" id="f-del-lbl" style="display:none">Estimated delivery</span>
+            <span class="dt" id="f-del-t" style="display:none;color:#b45309"></span>
+          </div>
+          <div class="banner ban-warn" style="margin-top:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>After this order, next available: <strong id="f-nxt"></strong></span>
+          </div>
+          <button class="btn-main" onclick="order('followers')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>PLACE ORDER
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- MY ORDERS -->
+    <section class="page" id="p-orders">
+      <div class="pg-head"><h1>My Orders</h1><p>Track all your orders</p></div>
+      <div class="ftabs">
+        <button class="ftab on" onclick="filt('all',this)">All</button>
+        <button class="ftab" onclick="filt('views',this)">Views</button>
+        <button class="ftab" onclick="filt('likes',this)">Likes</button>
+        <button class="ftab" onclick="filt('followers',this)">Followers</button>
+      </div>
+      <div id="olist"></div>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Auth guard ──
+const U=()=>localStorage.getItem('mi_user');
+if(!U()){location.href='/login';}
+
+// ── Init header ──
+const u=U();
+document.getElementById('sbAv').textContent=u[0].toUpperCase();
+document.getElementById('sbUn').textContent='@'+u;
+document.getElementById('tcUser').textContent='@'+u;
+const hr=new Date().getHours();
+document.getElementById('greet').textContent=(hr<12?'Good morning':hr<17?'Good afternoon':'Good evening')+', @'+u+' 👋';
+
+// ── Storage ──
+const K=k=>k+'_'+u;
+const getOrders=()=>JSON.parse(localStorage.getItem(K('mi_ord'))||'[]');
+const saveOrders=o=>localStorage.setItem(K('mi_ord'),JSON.stringify(o));
+const today=()=>new Date().toISOString().slice(0,10);
+const getDV=()=>{const d=JSON.parse(localStorage.getItem(K('mi_dv'))||'{}');return d.date===today()?d:{date:today(),count:0}};
+const saveDV=n=>localStorage.setItem(K('mi_dv'),JSON.stringify({date:today(),count:n}));
+const getDL=()=>{const d=JSON.parse(localStorage.getItem(K('mi_dl'))||'{}');return d.date===today()?d:{date:today(),count:0}};
+const saveDL=n=>localStorage.setItem(K('mi_dl'),JSON.stringify({date:today(),count:n}));
+const getFL=()=>localStorage.getItem(K('mi_fl'));
+const saveFL=()=>localStorage.setItem(K('mi_fl'),new Date().toISOString());
+const getSess=()=>{const s=JSON.parse(localStorage.getItem('mi_sessions')||'{}');return s[u]||{}};
+const randDel=()=>Math.floor(Math.random()*19)+6;
+
+// ── Toast ──
+function toast(msg,t='ok'){const e=document.getElementById('toast');e.className='toast '+t;e.innerHTML=(t==='ok'?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>')+' '+msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3500)}
+
+// ── Nav ──
+const pages={overview:'Overview',views:'Add Views',likes:'Add Likes',followers:'Add Followers',orders:'My Orders'};
+function go(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
+  document.getElementById('p-'+p).classList.add('on');
+  document.querySelector('[data-p="'+p+'"]').classList.add('on');
+  document.getElementById('pgTitle').textContent=pages[p];
+  closeSb();
+  if(p==='overview')initOV();
+  if(p==='views')initV();
+  if(p==='likes')initL();
+  if(p==='followers')initF();
+  if(p==='orders')renderOrders('all');
+}
+document.querySelectorAll('.ni[data-p]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.p)));
+go('overview');
+
+function openSb(){document.getElementById('sb').classList.add('open');document.getElementById('ov').classList.add('show')}
+function closeSb(){document.getElementById('sb').classList.remove('open');document.getElementById('ov').classList.remove('show')}
+
+// ── Status ──
+function status(o){
+  // Check if admin has set a manual status
+  if(o.adminStatus) return {label:o.adminStatus,cls:adminCls(o.adminStatus)};
+  const prog=(Date.now()-new Date(o.createdAt).getTime())/(o.dh*3600000);
+  if(prog>=1)return{label:'Delivered',cls:'bd'};
+  if(prog>=0.3)return{label:'In Progress',cls:'bi'};
+  return{label:'Processing',cls:'bp'};
+}
+function adminCls(s){const m={'Processing':'bp','In Progress':'bi','Delivered':'bd','Completed':'bd','Network Issue':'bp','Delayed':'bp','Cancelled':'bt'};return m[s]||'bp'}
+
+// ── Delivery reveal animation ──
+function showDel(boxId,loadId,lblId,timeId,hrs){
+  const box=document.getElementById(boxId);
+  const load=document.getElementById(loadId);
+  const lbl=document.getElementById(lblId);
+  const t=document.getElementById(timeId);
+  box.classList.add('show');
+  load.style.display='flex'; lbl.style.display='none'; t.style.display='none';
+  setTimeout(()=>{
+    load.style.display='none';
+    lbl.style.display='block';
+    t.style.display='block';
+    t.textContent='~'+hrs+' hrs';
+  },Math.floor(Math.random()*1000)+1500);
+}
+
+// ── OVERVIEW ──
+function initOV(){
+  const o=getOrders();let tv=0,tl=0,tf=0,ta=0;
+  o.forEach(x=>{if(x.type==='views')tv+=x.qty;if(x.type==='likes')tl+=x.qty;if(x.type==='followers')tf+=x.qty;if(status(x).label!=='Delivered'&&status(x).label!=='Completed'&&status(x).label!=='Cancelled')ta++});
+  document.getElementById('ov-v').textContent=tv.toLocaleString();
+  document.getElementById('ov-l').textContent=tl.toLocaleString();
+  document.getElementById('ov-f').textContent=tf.toLocaleString();
+  document.getElementById('ov-a').textContent=ta;
+  const dv=getDV(),dl=getDL();
+  document.getElementById('ov-dv-t').textContent=dv.count.toLocaleString()+' / 1,000';
+  document.getElementById('ov-dl-t').textContent=dl.count+' / 200';
+  document.getElementById('ov-dv-b').style.width=Math.min(dv.count/10,100)+'%';
+  document.getElementById('ov-dl-b').style.width=Math.min(dl.count/2,100)+'%';
+  const rec=[...o].reverse().slice(0,3);
+  document.getElementById('ov-rec').innerHTML=rec.length?buildOCards(rec):'<div class="empty"><div class="ei">📦</div><p>No orders yet</p></div>';
+}
+
+// ── VIEWS ──
+let vDel=0,vReady=false;
+function initV(){
+  vReady=false; vDel=0;
+  document.getElementById('v-del-box').classList.remove('show');
+  const rem=Math.max(0,1000-getDV().count);
+  const sl=document.getElementById('v-sl'),num=document.getElementById('v-num');
+  sl.max=Math.min(1000,Math.max(100,rem));
+  if(+sl.value>rem){sl.value=Math.min(rem,1000);num.value=sl.value}
+  updVrem();
+  const check=()=>{trigDel('v')};
+  sl.oninput=()=>{num.value=sl.value;updVrem();check()};
+  num.oninput=()=>{let v=Math.min(Math.max(+num.value||100,100),Math.min(1000,rem));num.value=sl.value=v;updVrem();check()};
+  document.getElementById('v-link').oninput=check;
+}
+function updVrem(){
+  const rem=Math.max(0,1000-getDV().count);
+  const rt=document.getElementById('v-rem');
+  const btn=document.getElementById('v-btn');
+  if(rem<=0){rt.className='rtag rt-out';rt.textContent='✗ Daily limit reached';btn.disabled=true}
+  else{rt.className=rem<300?'rtag rt-low':'rtag rt-ok';rt.textContent=(rem<300?'⚠ ':'✓ ')+rem.toLocaleString()+' remaining today';btn.disabled=false}
+}
+
+// ── LIKES ──
+let lDel=0,lReady=false,lType='post';
+function initL(){
+  lReady=false; lDel=0;
+  document.getElementById('l-del-box').classList.remove('show');
+  const rem=Math.max(0,200-getDL().count);
+  const sl=document.getElementById('l-sl'),num=document.getElementById('l-num');
+  sl.max=Math.min(200,Math.max(100,rem));
+  if(+sl.value>rem){sl.value=Math.min(rem,200);num.value=sl.value}
+  updLrem();
+  const check=()=>trigDel('l');
+  sl.oninput=()=>{num.value=sl.value;updLrem();check()};
+  num.oninput=()=>{let v=Math.min(Math.max(+num.value||100,100),Math.min(200,rem));num.value=sl.value=v;updLrem();check()};
+  document.getElementById('l-link').oninput=check;
+}
+function ltype(t){lType=t;document.getElementById('l-post').classList.toggle('on',t==='post');document.getElementById('l-reel').classList.toggle('on',t==='reel');document.getElementById('l-link').placeholder=t==='reel'?'https://www.instagram.com/reel/…':'https://www.instagram.com/p/…';trigDel('l')}
+function updLrem(){
+  const rem=Math.max(0,200-getDL().count);
+  const rt=document.getElementById('l-rem'),btn=document.getElementById('l-btn');
+  if(rem<=0){rt.className='rtag rt-out';rt.textContent='✗ Daily limit reached';btn.disabled=true}
+  else{rt.className=rem<50?'rtag rt-low':'rtag rt-ok';rt.textContent=(rem<50?'⚠ ':'✓ ')+rem+' remaining today';btn.disabled=false}
+}
+
+// ── FOLLOWERS ──
+let fDel=0, fReady=false;
+function initF(){
+  fReady=false; fDel=0;
+  document.getElementById('f-del-box').classList.remove('show');
+  const now=Date.now(),sess=getSess();
+  const joined=sess.createdAt?new Date(sess.createdAt).getTime():now;
+  const daysSince=(now-joined)/86400000;
+  const lastO=getFL();
+  const daysSinceLast=lastO?(now-new Date(lastO).getTime())/86400000:999;
+  const locked=document.getElementById('f-locked'),avail=document.getElementById('f-avail');
+  if(daysSince<5){const d=Math.ceil(5-daysSince);document.getElementById('f-lt').textContent='🔒 Not unlocked yet';document.getElementById('f-ls').textContent=`Available in ${d} day${d!==1?'s':''} after joining.`;locked.style.display='block';avail.style.display='none'}
+  else if(daysSinceLast<5){const d=Math.ceil(5-daysSinceLast);document.getElementById('f-lt').textContent='⏳ Cooldown active';document.getElementById('f-ls').textContent=`Next order in ${d} day${d!==1?'s':''}.`;locked.style.display='block';avail.style.display='none'}
+  else{
+    locked.style.display='none';avail.style.display='block';
+    const nxt=new Date(now+5*86400000).toLocaleDateString('en-IN',{day:'numeric',month:'long'});
+    document.getElementById('f-nxt').textContent=nxt;
+    const sl=document.getElementById('f-sl'),num=document.getElementById('f-num');
+    sl.oninput=()=>{num.value=sl.value;trigDel('f')};
+    num.oninput=()=>{let v=Math.min(Math.max(+num.value||10,10),100);num.value=sl.value=v;trigDel('f')};
+    trigDel('f');
+  }
+}
+
+// ── Delivery trigger (only when link + qty set) ──
+const delTimers={v:null,l:null,f:null};
+function trigDel(pfx){
+  const linkId={'v':'v-link','l':'l-link','f':null}[pfx];
+  const hasLink=!linkId||document.getElementById(linkId).value.trim().length>5;
+  if(!hasLink)return;
+  clearTimeout(delTimers[pfx]);
+  delTimers[pfx]=setTimeout(()=>{
+    const hrs=randDel();
+    if(pfx==='v'){vDel=hrs;vReady=true}
+    if(pfx==='l'){lDel=hrs;lReady=true}
+    if(pfx==='f'){fDel=hrs;fReady=true}
+    showDel(pfx+'-del-box',pfx+'-del-load',pfx+'-del-lbl',pfx+'-del-t',hrs);
+  },300);
+}
+
+// ── PLACE ORDER ──
+function order(type){
+  const o=getOrders();let item={id:Date.now(),type,createdAt:new Date().toISOString()};
+  if(type==='views'){
+    const link=document.getElementById('v-link').value.trim();
+    const qty=+document.getElementById('v-sl').value;
+    if(!link){toast('Enter a Reel URL','err');return}
+    if(!link.includes('instagram.com')){toast('Invalid Instagram URL','err');return}
+    if(!vReady){toast('Wait for delivery estimate','err');return}
+    const rem=1000-getDV().count;if(qty>rem){toast('Limit exceeded','err');return}
+    item={...item,link,qty,dh:vDel,ctype:'Reel'};saveDV(getDV().count+qty);
+  }else if(type==='likes'){
+    const link=document.getElementById('l-link').value.trim();
+    const qty=+document.getElementById('l-sl').value;
+    if(!link){toast('Enter a URL','err');return}
+    if(!link.includes('instagram.com')){toast('Invalid Instagram URL','err');return}
+    if(!lReady){toast('Wait for delivery estimate','err');return}
+    const rem=200-getDL().count;if(qty>rem){toast('Limit exceeded','err');return}
+    item={...item,link,qty,dh:lDel,ctype:lType==='reel'?'Reel':'Post'};saveDL(getDL().count+qty);
+  }else if(type==='followers'){
+    const qty=+document.getElementById('f-sl').value;
+    if(!fReady){toast('Wait for delivery estimate','err');return}
+    item={...item,link:'—',qty,dh:fDel,ctype:'Profile'};saveFL();
+  }
+  o.push(item);saveOrders(o);
+  const labels={views:item.qty.toLocaleString()+' views',likes:item.qty+' likes',followers:item.qty+' followers'};
+  toast('Order placed — '+labels[type]+', ~'+item.dh+'h');
+  if(type==='views'){document.getElementById('v-link').value='';initV()}
+  if(type==='likes'){document.getElementById('l-link').value='';initL()}
+  if(type==='followers')initF();
+  initOV();
+}
+
+// ── BUILD ORDER CARDS ──
+function buildOCards(rows){
+  if(!rows.length)return'<div class="empty"><div class="ei">📦</div><p>No orders yet</p></div>';
+  const tl={views:'Views',likes:'Likes',followers:'Followers'};
+  const tc={views:'bv',likes:'bl',followers:'bf'};
+  return'<div class="olist">'+rows.map(o=>{
+    const st=status(o);
+    const dt=new Date(o.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    const lnk=o.link==='—'?'Profile':o.link.replace('https://www.instagram.com','…instagram.com');
+    return`<div class="ocard">
+      <div class="ocard-top">
+        <span class="badge ${tc[o.type]}">${tl[o.type]}</span>
+        <span class="badge" style="background:#f3f4f8;color:var(--text)">${o.ctype}</span>
+        <span class="badge ${st.cls}" style="margin-left:auto">${st.label}</span>
+      </div>
+      <div class="ocard-body">
+        <strong>${o.qty.toLocaleString()}</strong> ${tl[o.type].toLowerCase()} · ~${o.dh}h delivery
+        <span class="ocard-link">${lnk}</span>
+      </div>
+      <div class="ocard-footer"><span class="date">${dt}</span></div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function renderOrders(f){
+  const all=[...getOrders()].reverse();
+  const rows=f==='all'?all:all.filter(o=>o.type===f);
+  document.getElementById('olist').innerHTML=buildOCards(rows);
+}
+function filt(f,btn){document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderOrders(f)}
+
+function logout(){localStorage.removeItem('mi_user');location.href='/login'}
+</script>
+</body>
+</html>

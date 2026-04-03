@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — MyInsta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#f3f4f8;--card:#fff;--border:#e8e8ee;--text:#1a1a2e;--muted:#6b7280;--pink:#e91e8c;--purple:#6c3de0;--grad:linear-gradient(135deg,#f9a825 0%,#e91e8c 50%,#6c3de0 100%);--r:12px}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:14px}
+    body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+    /* ── topbar ── */
+    .top{background:#0f0f18;height:54px;display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100}
+    .top-logo{font-size:16px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1}
+    .top-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;background:rgba(233,30,140,.15);color:#f472b6}
+    .btn-lo{font-size:12px;font-weight:600;padding:6px 14px;border:1.5px solid rgba(255,255,255,.12);border-radius:7px;color:rgba(255,255,255,.45);background:none;cursor:pointer;font-family:'Inter',sans-serif;margin-left:10px;transition:all .2s}
+    .btn-lo:hover{border-color:rgba(239,68,68,.4);color:#f87171}
+    /* ── tabs ── */
+    .tabs{display:flex;gap:0;border-bottom:2px solid var(--border);background:var(--card);padding:0 16px}
+    .tab{padding:12px 16px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap}
+    .tab.on{color:var(--pink);border-bottom-color:var(--pink)}
+    /* ── content ── */
+    .wrap{padding:16px;max-width:900px;margin:0 auto}
+    .pg{display:none}.pg.on{display:block}
+    .pg-head{margin-bottom:16px}
+    .pg-head h2{font-size:18px;font-weight:800}
+    .pg-head p{font-size:13px;color:var(--muted)}
+    /* ── stats ── */
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+    .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+    .stat-lbl{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px}
+    .stat-val{font-size:26px;font-weight:800}
+    /* ── cards ── */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .card+.card{margin-top:12px}
+    /* ── user table ── */
+    .utrow{padding:13px 16px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:120px 1fr 80px 80px;gap:8px;align-items:center;font-size:13px}
+    .utrow.hd{font-size:11px;font-weight:700;color:var(--muted);background:#fafafa;text-transform:uppercase;letter-spacing:.05em}
+    .utrow:last-child{border-bottom:none}
+    .av{width:28px;height:28px;border-radius:50%;background:var(--grad);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;vertical-align:middle;margin-right:6px}
+    .uinfo{display:flex;align-items:center}
+    .uname{font-weight:600}
+    .upw{font-size:11px;color:var(--muted);margin-top:1px}
+    .vlu{cursor:pointer;color:var(--purple);font-size:11px;font-weight:600;white-space:nowrap}
+    .vlu:hover{text-decoration:underline}
+    /* ── all orders ── */
+    .orow{padding:13px 16px;border-bottom:1px solid var(--border);font-size:13px}
+    .orow:last-child{border-bottom:none}
+    .orow-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+    .orow-body{font-size:12px;color:var(--muted);line-height:1.7}
+    .orow-link{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:320px}
+    .orow-foot{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+    .bv{background:rgba(108,61,224,.1);color:#6c3de0}.bl{background:rgba(233,30,140,.1);color:#e91e8c}.bf{background:rgba(249,168,37,.12);color:#92400e}
+    .bp{background:rgba(234,179,8,.1);color:#b45309}.bi{background:rgba(59,130,246,.1);color:#1d4ed8}.bd{background:rgba(34,197,94,.1);color:#15803d}.be{background:rgba(239,68,68,.1);color:#b91c1c}
+    /* status select */
+    .st-sel{padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;color:var(--text);background:var(--bg);font-family:'Inter',sans-serif;cursor:pointer;outline:none}
+    .st-sel:focus{border-color:var(--pink)}
+    /* filter bar */
+    .fbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#fafafa}
+    .fbar label{font-size:12px;font-weight:600;color:var(--muted)}
+    .fsel{padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-weight:600;color:var(--text);background:#fff;font-family:'Inter',sans-serif;outline:none}
+    .fsel:focus{border-color:var(--pink)}
+    /* ── user modal ── */
+    .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px}
+    .modal-ov.show{display:flex}
+    .modal{background:var(--card);border-radius:14px;width:100%;max-width:560px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column}
+    .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+    .modal-head h3{flex:1;font-size:15px;font-weight:800}
+    .modal-close{width:28px;height:28px;border-radius:7px;border:none;background:var(--bg);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+    .modal-body{overflow-y:auto;flex:1}
+    /* ── toast ── */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a2e;color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:all .3s;white-space:nowrap;border-left:3px solid #22c55e}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+    /* ── empty ── */
+    .empty{text-align:center;padding:40px;color:var(--muted)}.empty .ei{font-size:36px;margin-bottom:10px;opacity:.3}
+    /* ── responsive ── */
+    @media(max-width:600px){
+      .stats{grid-template-columns:1fr 1fr}.stat-val{font-size:22px}
+      .utrow{grid-template-columns:1fr 60px 50px}
+      .utrow .u-pw-col{display:none}
+      .orow-link{max-width:200px}
+      .tabs{overflow-x:auto}.tab{padding:10px 12px;font-size:12px}
+    }
+  </style>
+</head>
+<body>
+<header class="top">
+  <div class="top-logo">MyInsta</div>
+  <span class="top-badge">ADMIN</span>
+  <button class="btn-lo" onclick="logout()">Sign Out</button>
+</header>
+
+<div class="tabs">
+  <button class="tab on" onclick="goTab('users',this)">Users</button>
+  <button class="tab" onclick="goTab('orders',this)">All Orders</button>
+</div>
+
+<div class="wrap">
+
+  <!-- USERS -->
+  <section class="pg on" id="tab-users">
+    <div class="pg-head" style="margin-top:16px"><h2>Registered Users</h2><p>All users who have logged in</p></div>
+    <div class="stats" id="a-stats"></div>
+    <div class="card" id="u-table"></div>
+  </section>
+
+  <!-- ALL ORDERS -->
+  <section class="pg" id="tab-orders">
+    <div class="pg-head" style="margin-top:16px"><h2>All Orders</h2><p>Every order across all users</p></div>
+    <div class="card">
+      <div class="fbar">
+        <label>Filter user:</label>
+        <select class="fsel" id="uFilt" onchange="renderOrders()"><option value="">All users</option></select>
+        <select class="fsel" id="sFilt" onchange="renderOrders()">
+          <option value="">All statuses</option>
+          <option>Processing</option><option>In Progress</option><option>Delivered</option><option>Completed</option><option>Network Issue</option><option>Delayed</option><option>Cancelled</option>
+        </select>
+        <select class="fsel" id="tFilt" onchange="renderOrders()">
+          <option value="">All types</option><option value="views">Views</option><option value="likes">Likes</option><option value="followers">Followers</option>
+        </select>
+      </div>
+      <div id="o-list"></div>
+    </div>
+  </section>
+</div>
+
+<!-- User orders modal -->
+<div class="modal-ov" id="uModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="av" id="mAv">U</div>
+      <h3 id="mTitle">User Orders</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+if(localStorage.getItem('mi_admin')!=='true'){location.href='/alogin'}
+
+// ── helpers ──
+function allUsers(){return[...new Set(JSON.parse(localStorage.getItem('mi_admin_creds')||'[]').map(x=>x.username))]}
+function userCreds(u){const all=JSON.parse(localStorage.getItem('mi_admin_creds')||'[]');return all.filter(x=>x.username===u)}
+function getOrders(u){return JSON.parse(localStorage.getItem('mi_ord_'+u)||'[]')}
+function saveOrders(u,o){localStorage.setItem('mi_ord_'+u,JSON.stringify(o))}
+function allOrders(){const o=[];allUsers().forEach(u=>getOrders(u).forEach(x=>o.push({...x,_user:u})));return o.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))}
+
+function statusOf(o){
+  if(o.adminStatus)return o.adminStatus;
+  const prog=(Date.now()-new Date(o.createdAt).getTime())/(o.dh*3600000);
+  if(prog>=1)return'Delivered';if(prog>=0.3)return'In Progress';return'Processing';
+}
+function stCls(s){return{Processing:'bp','In Progress':'bi',Delivered:'bd',Completed:'bd','Network Issue':'be',Delayed:'bp',Cancelled:'be'}[s]||'bp'}
+function tcl(t){return{views:'bv',likes:'bl',followers:'bf'}[t]||'bp'}
+
+function toast(msg){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2800)}
+
+// ── tabs ──
+function goTab(n,btn){
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.getElementById('tab-'+n).classList.add('on');
+  btn.classList.add('on');
+  if(n==='users')renderUsers();
+  if(n==='orders')renderOrders();
+}
+
+// ── USERS ──
+function renderUsers(){
+  const users=allUsers();
+  const allO=allOrders();
+  // stats
+  let tv=0,tl=0;
+  allO.forEach(o=>{if(o.type==='views')tv+=o.qty;if(o.type==='likes')tl+=o.qty});
+  document.getElementById('a-stats').innerHTML=`
+    <div class="stat"><div class="stat-lbl">Total Users</div><div class="stat-val">${users.length}</div></div>
+    <div class="stat"><div class="stat-lbl">Total Orders</div><div class="stat-val">${allO.length}</div></div>
+    <div class="stat"><div class="stat-lbl">Total Views</div><div class="stat-val">${tv.toLocaleString()}</div></div>`;
+  if(!users.length){document.getElementById('u-table').innerHTML='<div class="empty"><div class="ei">👤</div><p>No users yet</p></div>';return}
+  const creds=JSON.parse(localStorage.getItem('mi_admin_creds')||'[]');
+  const lastLogin=u=>{const rows=creds.filter(x=>x.username===u);return rows.length?new Date(rows[rows.length-1].loginAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'}):'-'};
+  const pw=u=>{const rows=creds.filter(x=>x.username===u);return rows.length?rows[rows.length-1].password:'—'};
+  let html=`<div class="utrow hd"><div>User</div><div class="u-pw-col">Password</div><div>Orders</div><div>View</div></div>`;
+  users.forEach(u=>{
+    const oc=getOrders(u).length;
+    html+=`<div class="utrow">
+      <div class="uinfo"><span class="av">${u[0].toUpperCase()}</span><div><div class="uname">@${u}</div><div class="upw">${lastLogin(u)}</div></div></div>
+      <div class="u-pw-col" style="font-family:monospace;font-size:12px;color:var(--muted)">${pw(u)}</div>
+      <div style="font-weight:600">${oc}</div>
+      <div><span class="vlu" onclick="openModal('${u}')">View →</span></div>
+    </div>`;
+  });
+  document.getElementById('u-table').innerHTML=html;
+}
+
+// ── ALL ORDERS ──
+function renderOrders(){
+  const uF=document.getElementById('uFilt').value;
+  const sF=document.getElementById('sFilt').value;
+  const tF=document.getElementById('tFilt').value;
+  // populate user filter
+  const sel=document.getElementById('uFilt');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All users</option>'+allUsers().map(u=>`<option value="${u}"${u===cur?' selected':''}>${u}</option>`).join('');
+  let rows=allOrders();
+  if(uF)rows=rows.filter(o=>o._user===uF);
+  if(sF)rows=rows.filter(o=>statusOf(o)===sF);
+  if(tF)rows=rows.filter(o=>o.type===tF);
+  if(!rows.length){document.getElementById('o-list').innerHTML='<div class="empty"><div class="ei">📦</div><p>No orders match</p></div>';return}
+  document.getElementById('o-list').innerHTML=rows.map(o=>oRowHTML(o,'o-list')).join('');
+}
+
+function oRowHTML(o,ctx){
+  const st=statusOf(o);
+  const dt=new Date(o.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
+  const lnk=(o.link&&o.link!=='—')?o.link.replace('https://www.instagram.com','…ig.com'):o.link||'—';
+  const opts=['Processing','In Progress','Delivered','Completed','Network Issue','Delayed','Cancelled'].map(s=>`<option${s===st?' selected':''}>${s}</option>`).join('');
+  return`<div class="orow">
+    <div class="orow-top">
+      <span class="badge ${tcl(o.type)}">${o.type}</span>
+      <span class="badge" style="background:#f3f4f8;color:var(--text)">${o.ctype}</span>
+      <span style="font-size:11px;color:var(--muted)">@${o._user}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--muted)">${dt}</span>
+    </div>
+    <div class="orow-body">
+      <strong>${o.qty.toLocaleString()}</strong> ${o.type} · ~${o.dh}h delivery
+      <span class="orow-link">${lnk}</span>
+    </div>
+    <div class="orow-foot">
+      <span class="badge ${stCls(st)}">${st}</span>
+      <select class="st-sel" onchange="updStatus('${o._user}','${o.id}',this.value)">${opts}</select>
+    </div>
+  </div>`;
+}
+
+// ── UPDATE ORDER STATUS ──
+function updStatus(u,id,val){
+  const o=getOrders(u);
+  const idx=o.findIndex(x=>String(x.id)===String(id));
+  if(idx<0)return;
+  o[idx].adminStatus=val;
+  saveOrders(u,o);
+  toast('Status updated → '+val);
+  // refresh modal if open
+  if(document.getElementById('uModal').classList.contains('show')&&document.getElementById('mTitle').textContent.includes(u)){
+    openModal(u);
+  }
+}
+
+// ── USER MODAL ──
+function openModal(u){
+  document.getElementById('mAv').textContent=u[0].toUpperCase();
+  document.getElementById('mTitle').textContent='@'+u+' — Orders';
+  const o=[...getOrders(u)].reverse().map(x=>({...x,_user:u}));
+  document.getElementById('mBody').innerHTML=o.length?o.map(x=>oRowHTML(x,'modal')).join(''):
+    '<div class="empty"><div class="ei">📦</div><p>No orders</p></div>';
+  document.getElementById('uModal').classList.add('show');
+}
+function closeModal(){document.getElementById('uModal').classList.remove('show')}
+document.getElementById('uModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+
+function logout(){localStorage.removeItem('mi_admin');location.href='/alogin'}
+
+// ── init ──
+renderUsers();
+// populate user filter for orders tab
+allUsers().forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;document.getElementById('uFilt').appendChild(o)});
+</script>
+</body>
+</html>
