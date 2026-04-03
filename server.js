@@ -9,7 +9,7 @@ app.use('/js',  express.static(path.join(__dirname, 'js')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 
 // Routes
-app.get('/',          (_, res) => res.redirect('/login'));
+app.get('/',          (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login',     (_, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (_, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/alogin',    (_, res) => res.sendFile(path.join(__dirname, 'admin-login.html')));
