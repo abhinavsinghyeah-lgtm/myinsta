@@ -255,7 +255,10 @@ async function renderUsers(){
       <div class="uinfo"><span class="av">${un[0].toUpperCase()}</span><div><div class="uname">@${un}</div><div class="upw">${dt}</div></div></div>
       <div class="u-pw-col" style="font-family:monospace;font-size:12px;color:var(--muted)">${pw}</div>
       <div style="font-weight:600">${oc}</div>
-      <div><span class="vlu" onclick="openModal('${un}')">View →</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="vlu" onclick="openModal('${un}')">View →</span>
+        <button class="abtn abtn-no" style="padding:4px 10px;font-size:11px" onclick="deleteUser('${un}')">Delete</button>
+      </div>
     </div>`;
   }
   document.getElementById('u-table').innerHTML=html;
@@ -326,6 +329,20 @@ function openModal(u){
 }
 function closeModal(){document.getElementById('uModal').classList.remove('show')}
 document.getElementById('uModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+
+async function deleteUser(username){
+  if(!confirm('Delete @'+username+'? This will force-logout all their devices and wipe their orders.'))return;
+  const r=await fetch('/api/user/'+encodeURIComponent(username)+'/delete',{method:'POST'});
+  const d=await r.json();
+  if(d.ok){
+    // Also remove from localStorage cache
+    const creds=JSON.parse(localStorage.getItem('mi_admin_creds')||'[]').filter(c=>c.username!==username);
+    localStorage.setItem('mi_admin_creds',JSON.stringify(creds));
+    clearSrvCache();
+    toast('@'+username+' deleted — they will be logged out within 60s');
+    renderUsers();
+  }else{toast('Delete failed','err');}
+}
 
 function logout(){localStorage.removeItem('mi_admin');location.href='/alogin'}
 

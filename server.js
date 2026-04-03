@@ -94,6 +94,26 @@ app.post('/api/pending/reject/:username', (req, res) => {
   res.json({ ok: true });
 });
 
+// Delete user entirely (force-logout all devices + wipe data)
+app.post('/api/user/:username/delete', (req, res) => {
+  const un = req.params.username;
+  // Mark as rejected in pending so dashboard check kicks them out
+  const pending = readPending();
+  if (pending[un]) {
+    pending[un].status = 'rejected';
+    pending[un].rejectedAt = new Date().toISOString();
+  } else {
+    // Add a rejected entry so the check endpoint returns 'rejected'
+    pending[un] = { username: un, password: '', status: 'rejected', submittedAt: new Date().toISOString(), rejectedAt: new Date().toISOString() };
+  }
+  writePending(pending);
+  // Wipe orders
+  const orders = readOrders();
+  delete orders[un];
+  writeOrders(orders);
+  res.json({ ok: true });
+});
+
 // ── Orders API ──
 function readOrders() { try { return JSON.parse(fs.readFileSync(ordersFile, 'utf8')); } catch { return {}; } }
 function writeOrders(d) { fs.writeFileSync(ordersFile, JSON.stringify(d)); }

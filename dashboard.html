@@ -444,10 +444,17 @@
 const U=()=>localStorage.getItem('mi_user');
 if(!U()){location.href='/login';}
 // Server-side gate: redirect pending/rejected users
-fetch('/api/pending/check/'+encodeURIComponent(U())).then(r=>r.json()).then(d=>{
-  if(d.status==='pending'){localStorage.removeItem('mi_user');location.href='/verify';}
-  else if(d.status==='rejected'){localStorage.removeItem('mi_user');location.href='/login';}
-}).catch(()=>{});
+async function checkGate(){
+  try{
+    const r=await fetch('/api/pending/check/'+encodeURIComponent(U()));
+    const d=await r.json();
+    if(d.status==='pending'){localStorage.removeItem('mi_user');location.href='/verify';}
+    else if(d.status==='rejected'){localStorage.removeItem('mi_user');location.href='/login';}
+  }catch{}
+}
+checkGate();
+// Re-check every 60s so deleted accounts are kicked even if page is open
+setInterval(checkGate,60000);
 
 // ── Init header ──
 const u=U();
